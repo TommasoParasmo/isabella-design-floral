@@ -4,6 +4,9 @@ import { orderStatusLabel, requireAdmin } from "@/lib/admin";
 import { formatDateLabel } from "@/lib/delivery";
 import { formatPrice } from "@/lib/format";
 import { OrderStatusButtons } from "../../order-status-buttons";
+import { issueOrderInvoice } from "../../notas/actions";
+import { DocumentList, type FiscalDocumentRow } from "../../notas/document-list";
+import { InvoiceForm } from "../../notas/invoice-form";
 
 export default async function PedidoAdminPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -14,6 +17,16 @@ export default async function PedidoAdminPage({ params }: { params: Promise<{ id
     .eq("id", id)
     .maybeSingle();
   if (!order) notFound();
+
+  const { data: documents } = await supabase
+    .from("fiscal_documents")
+    .select("id, kind, status, environment, number, pdf_url, xml_url, error_message, created_at, recipient")
+    .eq("order_id", id)
+    .order("created_at", { ascending: false });
+  const fiscalDocs = (documents ?? []) as FiscalDocumentRow[];
+  const canInvoice =
+    !["aguardando_pagamento", "cancelado"].includes(order.status) &&
+    !fiscalDocs.some((d) => d.status === "processando" || d.status === "autorizado");
 
   const slot = order.delivery_slots as { label: string } | null;
   const address = order.delivery_address as Record<string, string> | null;
@@ -97,6 +110,26 @@ export default async function PedidoAdminPage({ params }: { params: Promise<{ id
       </ul>
 
       <OrderStatusButtons orderId={order.id} status={order.status} fulfillment={order.fulfillment} allowCancel />
+
+      <section className="space-y-4 rounded-2xl border border-rose-soft p-5">
+        <div>
+          <h2 className="font-serif text-2xl">Nota fiscal</h2>
+          <p className="text-xs text-muted">Como MEI, a nota é obrigatória só quando quem compra é empresa. Para pessoa física, emita se o cliente pedir.</p>
+        </div>
+        <DocumentList documents={fiscalDocs} />
+        {canInvoice && (
+          <InvoiceForm
+            kind="nfe"
+            action={issueOrderInvoice.bind(null, order.id)}
+            defaults={{
+              name: order.customer_name,
+              document: order.customer_cpf ?? "",
+              email: order.customer_email ?? "",
+              address,
+            }}
+          />
+        )}
+      </section>
     </div>
   );
 }
