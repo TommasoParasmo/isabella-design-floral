@@ -23,29 +23,56 @@ const statusText: Record<string, { title: string; text: string }> = {
   cancelado: { title: "Pedido cancelado", text: "Este pedido foi cancelado. Se tiver dúvidas, fale com a Isa." },
 };
 
-export default async function PedidoPage({ params }: { params: Promise<{ code: string }> }) {
+type Search = { status?: string; collection_status?: string };
+
+export default async function PedidoPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ code: string }>;
+  searchParams: Promise<Search>;
+}) {
   const { code } = await params;
+  const query = await searchParams;
   if (!/^[A-F0-9]{8}$/.test(code)) notFound();
 
   const supabase = createAdminClient();
   const { data: order } = await supabase
     .from("orders")
     .select(
-      "code, status, fulfillment, scheduled_date, subtotal_cents, delivery_fee_cents, total_cents, delivery_slots(label), order_items(product_name, quantity, unit_price_cents)",
+      "code, status, fulfillment, scheduled_date, mp_preference_id, subtotal_cents, delivery_fee_cents, total_cents, delivery_slots(label), order_items(product_name, quantity, unit_price_cents)",
     )
     .eq("code", code)
     .maybeSingle();
   if (!order) notFound();
 
   const status = statusText[order.status] ?? statusText.aguardando_pagamento;
+  // O Mercado Pago volta para esta página em sucesso, pendência ou falha.
+  // Só esvazia o carrinho quando o pagamento foi aprovado ou está em análise (Pix).
+  const returned = query.collection_status ?? query.status;
+  const paymentFailed = returned === "rejected" || returned === "null" || returned === "failure";
+  const keepCart = order.status === "aguardando_pagamento" && (paymentFailed || !returned);
+  const retryUrl =
+    order.status === "aguardando_pagamento" && order.mp_preference_id
+      ? `https://www.mercadopago.com.br/checkout/v1/redirect?pref_id=${order.mp_preference_id}`
+      : null;
   const slot = order.delivery_slots as unknown as { label: string } | null;
 
   return (
     <section className="mx-auto max-w-2xl px-4 py-16 text-center sm:px-6">
-      <ClearCart />
+      {!keepCart && <ClearCart />}
       <p className="font-script text-3xl text-wine/80">pedido {order.code}</p>
       <h1 className="mt-2 font-serif text-5xl">{status.title}</h1>
-      <p className="mx-auto mt-4 max-w-md leading-relaxed text-muted">{status.text}</p>
+      <p className="mx-auto mt-4 max-w-md leading-relaxed text-muted">
+        {paymentFailed && order.status === "aguardando_pagamento"
+          ? "O pagamento não foi concluído. Você pode tentar de novo com outro cartão ou pelo Pix."
+          : status.text}
+      </p>
+      {retryUrl && (
+        <a href={retryUrl} className="mt-6 inline-block rounded-full bg-wine px-7 py-3 text-sm text-cream hover:bg-wine-deep">
+          {paymentFailed ? "Tentar pagar de novo" : "Ir para o pagamento"}
+        </a>
+      )}
 
       <div className="mt-10 rounded-3xl border border-rose-soft bg-blush/50 p-6 text-left text-sm">
         {order.scheduled_date && (

@@ -29,6 +29,10 @@ export default async function PedidoAdminPage({ params }: { params: Promise<{ id
         <span className="mt-2 inline-block rounded-full bg-blush px-3 py-1 text-xs text-wine">{orderStatusLabel[order.status]}</span>
       </div>
 
+      {order.stock_issue && (
+        <p className="rounded-xl bg-wine/10 p-3 text-sm text-wine">{order.stock_issue}. Combine a troca da peça com o cliente ou estorne pelo Mercado Pago.</p>
+      )}
+
       <dl className="grid gap-4 rounded-2xl border border-rose-soft p-5 text-sm sm:grid-cols-2">
         {order.scheduled_date && (
           <div>

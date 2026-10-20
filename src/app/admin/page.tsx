@@ -16,7 +16,7 @@ export default async function AgendaPage({ searchParams }: { searchParams: Promi
     supabase
       .from("orders")
       .select(
-        "id, code, status, fulfillment, customer_name, customer_phone, recipient_name, total_cents, delivery_address, delivery_slots(label, starts_at), order_items(product_name, quantity)",
+        "id, code, status, stock_issue, fulfillment, customer_name, customer_phone, recipient_name, total_cents, delivery_address, delivery_slots(label, starts_at), order_items(product_name, quantity)",
       )
       .eq("scheduled_date", date)
       .not("status", "in", "(cancelado,aguardando_pagamento)")
@@ -93,6 +93,9 @@ export default async function AgendaPage({ searchParams }: { searchParams: Promi
                     <p className="mt-2 text-sm text-muted">{formatPrice(order.total_cents)}</p>
                   </div>
                 </div>
+                {order.stock_issue && (
+                  <p className="mt-3 rounded-xl bg-wine/10 p-2 text-xs text-wine">{order.stock_issue}. Troque a peça ou estorne.</p>
+                )}
                 <OrderStatusButtons orderId={order.id} status={order.status} fulfillment={order.fulfillment} />
               </li>
             );
