@@ -42,7 +42,8 @@ export default async function Home() {
           </div>
           <div className="mx-auto w-full max-w-sm">
             <div className="aspect-[4/5] overflow-hidden rounded-t-[999px] rounded-b-3xl border-[10px] border-rose/30">
-              <FlowerArt seed="hero-bordo" className="h-full w-full" />
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/fotos/arranjo-bordo.jpg" alt="Arranjo de celósias vermelhas e boca-de-leão em vaso branco" className="h-full w-full object-cover" />
             </div>
           </div>
         </div>
@@ -88,12 +89,12 @@ export default async function Home() {
 
       {/* Categorias */}
       <section className="bg-blush py-16">
-        <div className="mx-auto grid max-w-6xl grid-cols-2 gap-4 px-4 sm:px-6 md:grid-cols-4">
+        <div className="mx-auto flex max-w-6xl flex-wrap justify-center gap-4 px-4 sm:px-6">
           {categories.map((category) => (
             <Link
               key={category.id}
               href={`/loja?categoria=${category.slug}`}
-              className="group rounded-2xl border border-rose-soft bg-cream p-6 text-center transition-colors hover:border-wine"
+              className="group w-[calc(50%-0.5rem)] rounded-2xl border border-rose-soft bg-cream p-6 text-center transition-colors hover:border-wine md:w-64"
             >
               <h3 className="font-serif text-2xl text-wine">{category.name}</h3>
               <p className="mt-2 text-xs leading-relaxed text-muted">{category.description}</p>
@@ -156,7 +157,12 @@ export default async function Home() {
           {workshops.map((w) => (
             <Link key={w.id} href={`/workshops/${w.slug}`} className="group flex gap-5 rounded-3xl border border-rose-soft bg-cream p-5 transition-colors hover:border-wine">
               <div className="h-28 w-24 shrink-0 overflow-hidden rounded-t-[999px] rounded-b-xl">
-                <FlowerArt seed={w.slug} className="h-full w-full" />
+                {w.image_url ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={w.image_url} alt="" className="h-full w-full object-cover" />
+                ) : (
+                  <FlowerArt seed={w.slug} className="h-full w-full" />
+                )}
               </div>
               <div>
                 <p className="text-xs tracking-wider text-muted uppercase">{formatDateTime(w.starts_at)}</p>
@@ -173,7 +179,10 @@ export default async function Home() {
       {/* Sobre */}
       <section id="sobre" className="scroll-mt-24 bg-blush">
         <div className="mx-auto grid max-w-6xl items-center gap-10 px-4 py-20 sm:px-6 md:grid-cols-2">
-          <div className="stripes aspect-square max-h-[420px] rounded-t-[999px] rounded-b-3xl" aria-hidden />
+          <div className="mx-auto aspect-[4/5] w-full max-w-sm overflow-hidden rounded-t-[999px] rounded-b-3xl">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/fotos/buque-hortensias.jpg" alt="Buquê de hortênsias azuis e verdes montado pela Isa" className="h-full w-full object-cover" />
+          </div>
           <div>
             <p className="font-script text-3xl text-wine/80">muito prazer</p>
             <h2 className="mt-1 font-serif text-4xl sm:text-5xl">Isabella Parasmo</h2>
