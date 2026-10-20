@@ -1,6 +1,9 @@
 import { requireAdmin } from "@/lib/admin";
 import { formatDateTime, formatPrice } from "@/lib/format";
 import { createWorkshop } from "../actions";
+import { issueWorkshopInvoice } from "../notas/actions";
+import { DocumentList, type FiscalDocumentRow } from "../notas/document-list";
+import { InvoiceForm } from "../notas/invoice-form";
 
 const field = "w-full rounded-xl border border-rose-soft bg-cream px-3 py-2 text-sm";
 
@@ -8,7 +11,7 @@ export default async function WorkshopsAdminPage() {
   const { supabase } = await requireAdmin();
   const { data: workshops } = await supabase
     .from("workshops")
-    .select("id, title, starts_at, capacity, price_cents, workshop_registrations(id, name, email, phone, seats, status, issue)")
+    .select("id, title, starts_at, capacity, price_cents, workshop_registrations(id, name, email, phone, cpf, seats, status, issue, fiscal_documents(id, kind, status, environment, number, pdf_url, xml_url, error_message, created_at, recipient))")
     .order("starts_at", { ascending: false });
 
   return (
@@ -31,12 +34,31 @@ export default async function WorkshopsAdminPage() {
               ))}
               {confirmed.length > 0 && (
                 <ul className="mt-3 divide-y divide-rose-soft/60 text-sm">
-                  {confirmed.map((r) => (
-                    <li key={r.id} className="flex flex-wrap justify-between gap-2 py-2">
-                      <span>{r.name}{r.seats > 1 ? ` (+${r.seats - 1})` : ""}</span>
-                      <span className="text-muted">{r.phone} · {r.email}</span>
-                    </li>
-                  ))}
+                  {confirmed.map((r) => {
+                    const docs = r.fiscal_documents as FiscalDocumentRow[];
+                    const invoiced = docs.some((d) => d.status === "processando" || d.status === "autorizado");
+                    return (
+                      <li key={r.id} className="py-2">
+                        <div className="flex flex-wrap justify-between gap-2">
+                          <span>{r.name}{r.seats > 1 ? ` (+${r.seats - 1})` : ""}</span>
+                          <span className="text-muted">{r.phone} · {r.email}</span>
+                        </div>
+                        <DocumentList documents={docs} />
+                        {!invoiced && (
+                          <details className="mt-2">
+                            <summary className="cursor-pointer text-xs text-wine">Emitir NFS-e</summary>
+                            <div className="mt-3">
+                              <InvoiceForm
+                                kind="nfse"
+                                action={issueWorkshopInvoice.bind(null, r.id)}
+                                defaults={{ name: r.name, document: r.cpf ?? "", email: r.email }}
+                              />
+                            </div>
+                          </details>
+                        )}
+                      </li>
+                    );
+                  })}
                 </ul>
               )}
             </section>

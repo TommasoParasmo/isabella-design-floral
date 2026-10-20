@@ -31,9 +31,11 @@ O estoque é controlado pela tabela `stock_movements`: cada entrada ou saída (v
 ## Painel da Isa (`/admin`)
 
 - **Agenda**: pedidos pagos do dia, por período, com botões para avançar o status (em preparo → saiu para entrega → entregue)
-- **Balcão**: venda presencial que baixa o estoque e fica registrada para a NFC-e
+- **Balcão**: venda presencial que baixa o estoque e entra na agenda como pedido retirado
 - **Estoque**: saldo atual, alerta de estoque baixo, entradas, perdas e ajustes
 - **Produtos**: cadastro com foto, preço, destaque e "entrega no mesmo dia"
+- **Assinaturas** e **Workshops**: assinantes, presentes e inscrições confirmadas
+- **Notas**: todas as notas emitidas, com PDF, XML e cancelamento
 
 Login em `/entrar`. Para criar a conta da Isa: Supabase → Authentication → Add user (e-mail e senha) e depois:
 
@@ -52,3 +54,20 @@ confere o valor e só então marca o pedido como pago e baixa o estoque (`confir
 
 Variáveis necessárias na Vercel: `SUPABASE_SERVICE_ROLE_KEY`, `MP_ACCESS_TOKEN`, `MP_WEBHOOK_SECRET`
 e `NEXT_PUBLIC_SITE_URL`. Veja `.env.example`.
+
+## Notas fiscais (Focus NFe)
+
+A Isa é MEI, então:
+
+- **NF-e** (venda de flores): obrigatória quando quem compra é empresa; para pessoa física, só se o cliente pedir.
+  Emitida na página do pedido, com os dados do cliente já preenchidos.
+- **NFS-e Nacional** (workshops): emitida na aba Workshops, por inscrição confirmada.
+- **NFC-e** não é usada: o MEI está dispensado de emitir nota para consumidor final pessoa física.
+
+Para ligar:
+
+1. Comprar o certificado digital e-CNPJ A1 e criar a conta na Focus NFe, cadastrando a empresa e o certificado lá.
+2. Preencher `FOCUSNFE_TOKEN` e os campos `FISCAL_*` na Vercel (veja `.env.example`).
+3. Testar com `FOCUSNFE_ENV=homologacao` (as notas saem sem valor fiscal) e só depois trocar para `producao`.
+
+Os códigos tributários padrão (CRT 4, CSOSN 102, serviço 08.02.01) servem para MEI, mas a contadora deve confirmar.
