@@ -35,13 +35,15 @@ async function handleOrderPayment(supabase: Supabase, payment: MpPayment, orderI
   }
 }
 
-async function handleGiftSubscriptionPayment(supabase: Supabase, payment: MpPayment, subscriptionId: string) {
+async function handleSubscriptionPayment(supabase: Supabase, payment: MpPayment, subscriptionId: string) {
   const { data: sub } = await supabase
     .from("subscriptions")
-    .select("id, total_cents, status, gift_months")
+    .select("id, kind, total_cents, status, gift_months")
     .eq("id", subscriptionId)
     .maybeSingle();
-  if (!sub) return;
+  // Cobranças mensais da assinatura recorrente também chegam como "payment",
+  // mas o status dela é controlado pelos eventos de preapproval.
+  if (!sub || sub.kind !== "presente") return;
 
   if (payment.status === "approved" && sub.status === "pendente") {
     if (!paidEnough(payment, sub.total_cents)) throw new Error(`Assinatura ${sub.id}: valor divergente`);
@@ -104,7 +106,7 @@ export async function POST(request: NextRequest) {
     const payment = await getPayment(dataId);
     const ref = payment.external_reference;
     if (!ref) return NextResponse.json({ ignored: true });
-    if (ref.startsWith("sub:")) await handleGiftSubscriptionPayment(supabase, payment, ref.slice(4));
+    if (ref.startsWith("sub:")) await handleSubscriptionPayment(supabase, payment, ref.slice(4));
     else if (ref.startsWith("ws:")) await handleWorkshopPayment(supabase, payment, ref.slice(3));
     else await handleOrderPayment(supabase, payment, ref);
   } else if (type === "subscription_preapproval") {

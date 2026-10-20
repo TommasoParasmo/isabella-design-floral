@@ -51,6 +51,8 @@ export async function registerForWorkshop(
     returnPath: "/workshops/obrigado",
     items: [{ id: workshop.id, title: `Workshop ${workshop.title}`, quantity: data.seats, unit_price_cents: workshop.price_cents }],
     payer: { name: data.customer.name, email: data.customer.email },
+    // Mesmo prazo da reserva da vaga.
+    expiresInMinutes: 30,
   });
   await supabase.from("workshop_registrations").update({ mp_preference_id: preference.id }).eq("id", registrationId);
 

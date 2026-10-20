@@ -40,7 +40,7 @@ export async function getProducts(categorySlug?: string, onlySameDay = false): P
   // Sem filtro de categoria, esconde as peças de coleções sazonais fora de época.
   const hidden = new Set(categories.filter((c) => !isVisible(c, today)).map((c) => c.id));
   const category = categorySlug ? categories.find((c) => c.slug === categorySlug) : undefined;
-  if (categorySlug && !category) return [];
+  if (categorySlug && (!category || !isVisible(category, today))) return [];
 
   let products: Product[];
   if (!isSupabaseConfigured()) {

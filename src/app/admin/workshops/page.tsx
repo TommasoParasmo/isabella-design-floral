@@ -8,7 +8,7 @@ export default async function WorkshopsAdminPage() {
   const { supabase } = await requireAdmin();
   const { data: workshops } = await supabase
     .from("workshops")
-    .select("id, title, starts_at, capacity, price_cents, workshop_registrations(id, name, email, phone, seats, status)")
+    .select("id, title, starts_at, capacity, price_cents, workshop_registrations(id, name, email, phone, seats, status, issue)")
     .order("starts_at", { ascending: false });
 
   return (
@@ -17,12 +17,18 @@ export default async function WorkshopsAdminPage() {
         <h1 className="font-serif text-4xl">Workshops</h1>
         {(workshops ?? []).map((w) => {
           const confirmed = w.workshop_registrations.filter((r) => r.status === "confirmada");
+          const issues = w.workshop_registrations.filter((r) => r.issue);
           const seats = confirmed.reduce((n, r) => n + r.seats, 0);
           return (
             <section key={w.id} className="rounded-2xl border border-rose-soft p-5">
               <p className="text-xs text-muted">{formatDateTime(w.starts_at)} · {formatPrice(w.price_cents)}</p>
               <h2 className="font-serif text-2xl">{w.title}</h2>
               <p className="text-sm text-muted">{seats} de {w.capacity} vagas confirmadas</p>
+              {issues.map((r) => (
+                <p key={r.id} className="mt-3 rounded-xl bg-wine/10 p-2 text-xs text-wine">
+                  {r.name} ({r.phone}): {r.issue}
+                </p>
+              ))}
               {confirmed.length > 0 && (
                 <ul className="mt-3 divide-y divide-rose-soft/60 text-sm">
                   {confirmed.map((r) => (

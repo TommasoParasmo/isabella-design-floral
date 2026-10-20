@@ -23,7 +23,11 @@ export async function createPreference(input: {
   returnPath: string;
   items: PreferenceItem[];
   payer: { name: string; email: string };
+  expiresInMinutes?: number;
 }) {
+  const expiration = input.expiresInMinutes
+    ? { expires: true, expiration_date_to: new Date(Date.now() + input.expiresInMinutes * 60_000).toISOString() }
+    : {};
   const res = await fetch(`${API}/checkout/preferences`, {
     method: "POST",
     headers: {
@@ -49,6 +53,7 @@ export async function createPreference(input: {
       auto_return: "approved",
       notification_url: `${siteUrl()}/api/mercadopago/webhook`,
       statement_descriptor: "ISABELLAPARASMO",
+      ...expiration,
       payment_methods: {
         installments: storeConfig.maxInstallments,
         excluded_payment_types: [{ id: "ticket" }],
