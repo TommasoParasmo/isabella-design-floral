@@ -33,3 +33,14 @@ insert into public.workshops (slug, title, description, starts_at, duration_minu
   ('buque-de-noiva', 'Buquê de Noiva', 'Aprenda a técnica espiral e monte seu próprio buquê com flores nobres.', '2026-11-14 14:00-03', 180, 39000, 10, array['Todas as flores e materiais', 'Café da tarde', 'Certificado']),
   ('arranjos-de-natal', 'Arranjos de Natal', 'Guirlanda e centro de mesa natalino com folhagens e flores secas.', '2026-12-05 10:00-03', 240, 45000, 12, array['Todos os materiais', 'Brunch', 'Peças para levar para casa'])
 on conflict (slug) do nothing;
+
+-- Coleção sazonal de Natal (aparece na home de 1/11 a 25/12)
+insert into public.categories (slug, name, description, position, seasonal, active_from, active_until, headline) values
+  ('natal', 'Natal', 'Guirlandas, centros de mesa e arranjos para as festas.', 0, true, '2026-11-01', '2026-12-25', 'Coleção de Natal')
+on conflict (slug) do nothing;
+
+insert into public.products (slug, name, description, category_id, price_cents, stock, featured, same_day) values
+  ('guirlanda-bordo', 'Guirlanda Bordô', 'Guirlanda de pinheiro natural com rosas secas e fita de veludo vinho.', (select id from public.categories where slug = 'natal'), 32900, 10, false, false),
+  ('centro-de-mesa-natal', 'Centro de Mesa Noite Feliz', 'Arranjo baixo com rosas, pinhas e velas para a ceia.', (select id from public.categories where slug = 'natal'), 38900, 8, false, false),
+  ('box-natal', 'Flower Box Natal', 'Caixa com rosas vermelhas, eucalipto e ramos de pinheiro.', (select id from public.categories where slug = 'natal'), 27900, 12, false, true)
+on conflict (slug) do nothing;

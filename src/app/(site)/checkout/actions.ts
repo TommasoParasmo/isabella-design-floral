@@ -145,8 +145,8 @@ export async function placeOrder(input: CheckoutInput): Promise<CheckoutResult> 
   }
 
   const preference = await createPreference({
-    orderId: order.id,
-    orderCode: order.code,
+    externalReference: order.id,
+    returnPath: `/pedido/${order.code}`,
     items: preferenceItems,
     payer: { name: data.customer.name, email: data.customer.email },
   });

@@ -1,42 +1,61 @@
 import { createPublicClient } from "./supabase/public";
 import { isSupabaseConfigured } from "./supabase/server";
-import type { DeliverySlot } from "./delivery";
+import { nowInSaoPaulo, type DeliverySlot } from "./delivery";
 import { seedCategories, seedDeliverySlots, seedPlans, seedProducts, seedWorkshops } from "./seed-data";
 import type { Category, Product, SubscriptionPlan, Workshop } from "./types";
 
 const PRODUCT_FIELDS = "id, slug, name, description, category_id, price_cents, image_url, stock, featured, same_day";
 
-export async function getCategories(): Promise<Category[]> {
+// Coleções sazonais só aparecem dentro da janela de datas.
+function isVisible(category: Category, today: string) {
+  if (!category.seasonal) return true;
+  return (!category.active_from || category.active_from <= today) && (!category.active_until || category.active_until >= today);
+}
+
+async function getAllCategories(): Promise<Category[]> {
   if (!isSupabaseConfigured()) return seedCategories;
   const { data, error } = await createPublicClient()
     .from("categories")
-    .select("id, slug, name, description, position")
+    .select("id, slug, name, description, position, seasonal, active_from, active_until, headline")
     .order("position");
   if (error) throw error;
   return data;
 }
 
+export async function getCategories(): Promise<Category[]> {
+  const today = nowInSaoPaulo().date;
+  return (await getAllCategories()).filter((c) => isVisible(c, today));
+}
+
+export async function getActiveCollection(): Promise<{ category: Category; products: Product[] } | null> {
+  const today = nowInSaoPaulo().date;
+  const category = (await getAllCategories()).find((c) => c.seasonal && isVisible(c, today));
+  if (!category) return null;
+  return { category, products: await getProducts(category.slug) };
+}
+
 export async function getProducts(categorySlug?: string, onlySameDay = false): Promise<Product[]> {
+  const categories = await getAllCategories();
+  const today = nowInSaoPaulo().date;
+  // Sem filtro de categoria, esconde as peças de coleções sazonais fora de época.
+  const hidden = new Set(categories.filter((c) => !isVisible(c, today)).map((c) => c.id));
+  const category = categorySlug ? categories.find((c) => c.slug === categorySlug) : undefined;
+  if (categorySlug && (!category || !isVisible(category, today))) return [];
+
+  let products: Product[];
   if (!isSupabaseConfigured()) {
-    const category = seedCategories.find((c) => c.slug === categorySlug);
-    return seedProducts
-      .filter((p) => !category || p.category_id === category.id)
-      .filter((p) => !onlySameDay || (p.same_day && p.stock > 0));
+    products = seedProducts;
+  } else {
+    let query = createPublicClient().from("products").select(PRODUCT_FIELDS).eq("active", true).order("name");
+    if (category) query = query.eq("category_id", category.id);
+    const { data, error } = await query;
+    if (error) throw error;
+    products = data;
   }
-  let query = createPublicClient().from("products").select(PRODUCT_FIELDS).eq("active", true).order("name");
-  if (onlySameDay) query = query.eq("same_day", true).gt("stock", 0);
-  if (categorySlug) {
-    const { data: category } = await createPublicClient()
-      .from("categories")
-      .select("id")
-      .eq("slug", categorySlug)
-      .maybeSingle();
-    if (!category) return [];
-    query = query.eq("category_id", category.id);
-  }
-  const { data, error } = await query;
-  if (error) throw error;
-  return data;
+
+  return products
+    .filter((p) => (category ? p.category_id === category.id : !p.category_id || !hidden.has(p.category_id)))
+    .filter((p) => !onlySameDay || (p.same_day && p.stock > 0));
 }
 
 export async function getFeaturedProducts(): Promise<Product[]> {

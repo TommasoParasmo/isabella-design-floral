@@ -4,6 +4,10 @@ export type Category = {
   name: string;
   description: string | null;
   position: number;
+  seasonal?: boolean;
+  active_from?: string | null;
+  active_until?: string | null;
+  headline?: string | null;
 };
 
 export type Product = {
