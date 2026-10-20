@@ -1,8 +1,6 @@
 import type { Metadata } from "next";
 import { Cormorant_Garamond, Montserrat, Pinyon_Script } from "next/font/google";
-import { Footer } from "@/components/footer";
-import { Header } from "@/components/header";
-import { WhatsAppButton } from "@/components/whatsapp-button";
+import { CartProvider } from "@/components/cart-provider";
 import { site } from "@/lib/site";
 import "./globals.css";
 
@@ -24,10 +22,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   return (
     <html lang="pt-BR">
       <body className={`${montserrat.variable} ${cormorant.variable} ${pinyon.variable} antialiased`}>
-        <Header />
-        <main>{children}</main>
-        <Footer />
-        <WhatsAppButton />
+        <CartProvider>{children}</CartProvider>
       </body>
     </html>
   );

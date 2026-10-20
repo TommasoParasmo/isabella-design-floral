@@ -1,9 +1,10 @@
 import { createPublicClient } from "./supabase/public";
 import { isSupabaseConfigured } from "./supabase/server";
-import { seedCategories, seedPlans, seedProducts, seedWorkshops } from "./seed-data";
+import type { DeliverySlot } from "./delivery";
+import { seedCategories, seedDeliverySlots, seedPlans, seedProducts, seedWorkshops } from "./seed-data";
 import type { Category, Product, SubscriptionPlan, Workshop } from "./types";
 
-const PRODUCT_FIELDS = "id, slug, name, description, category_id, price_cents, image_url, stock, featured";
+const PRODUCT_FIELDS = "id, slug, name, description, category_id, price_cents, image_url, stock, featured, same_day";
 
 export async function getCategories(): Promise<Category[]> {
   if (!isSupabaseConfigured()) return seedCategories;
@@ -15,12 +16,15 @@ export async function getCategories(): Promise<Category[]> {
   return data;
 }
 
-export async function getProducts(categorySlug?: string): Promise<Product[]> {
+export async function getProducts(categorySlug?: string, onlySameDay = false): Promise<Product[]> {
   if (!isSupabaseConfigured()) {
     const category = seedCategories.find((c) => c.slug === categorySlug);
-    return category ? seedProducts.filter((p) => p.category_id === category.id) : seedProducts;
+    return seedProducts
+      .filter((p) => !category || p.category_id === category.id)
+      .filter((p) => !onlySameDay || (p.same_day && p.stock > 0));
   }
   let query = createPublicClient().from("products").select(PRODUCT_FIELDS).eq("active", true).order("name");
+  if (onlySameDay) query = query.eq("same_day", true).gt("stock", 0);
   if (categorySlug) {
     const { data: category } = await createPublicClient()
       .from("categories")
@@ -89,4 +93,15 @@ export async function getUpcomingWorkshops(): Promise<Workshop[]> {
   if (availabilityError) throw availabilityError;
   const seats = new Map((availability ?? []).map((a) => [a.workshop_id, a.seats_left]));
   return workshops.map((w) => ({ ...w, seats_left: seats.get(w.id) ?? w.capacity }));
+}
+
+export async function getDeliverySlots(): Promise<DeliverySlot[]> {
+  if (!isSupabaseConfigured()) return seedDeliverySlots;
+  const { data, error } = await createPublicClient()
+    .from("delivery_slots")
+    .select("id, label, starts_at, ends_at, fee_cents")
+    .eq("active", true)
+    .order("starts_at");
+  if (error) throw error;
+  return data;
 }

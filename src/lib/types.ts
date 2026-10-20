@@ -16,6 +16,7 @@ export type Product = {
   image_url: string | null;
   stock: number;
   featured: boolean;
+  same_day: boolean;
 };
 
 export type SubscriptionPlan = {
