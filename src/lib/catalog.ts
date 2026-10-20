@@ -22,9 +22,19 @@ async function getAllCategories(): Promise<Category[]> {
   return data;
 }
 
+// IDs das categorias com pelo menos um produto ativo.
+async function categoriesWithProducts(): Promise<Set<string | null>> {
+  if (!isSupabaseConfigured()) return new Set(seedProducts.map((p) => p.category_id));
+  const { data, error } = await createPublicClient().from("products").select("category_id").eq("active", true);
+  if (error) throw error;
+  return new Set(data.map((p) => p.category_id));
+}
+
+// Categorias da vitrine: dentro da época e com algo à venda.
 export async function getCategories(): Promise<Category[]> {
   const today = nowInSaoPaulo().date;
-  return (await getAllCategories()).filter((c) => isVisible(c, today));
+  const [categories, filled] = await Promise.all([getAllCategories(), categoriesWithProducts()]);
+  return categories.filter((c) => isVisible(c, today) && filled.has(c.id));
 }
 
 export async function getActiveCollection(): Promise<{ category: Category; products: Product[] } | null> {

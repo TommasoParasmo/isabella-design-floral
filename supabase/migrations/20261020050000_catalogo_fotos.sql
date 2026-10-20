@@ -16,19 +16,11 @@ insert into public.products (slug, name, description, category_id, price_cents, 
   ('arranjo-campo', 'Arranjo Campo', 'Sempre-vivas, solidago e flores do campo coloridas em vaso de vidro.', (select id from public.categories where slug = 'arranjos'), 32900, 4, false, '/fotos/arranjo-campo.jpg')
 on conflict (slug) do update set image_url = excluded.image_url where public.products.image_url is null;
 
--- Produtos de exemplo sem foto: apaga os que nunca foram vendidos nem
--- movimentados; os demais ficam inativos para preservar o histórico.
-delete from public.products p
- where p.slug in ('buque-bordo', 'buque-rose-antique', 'buque-campestre', 'arranjo-jardim-ingles', 'arranjo-orquidea', 'box-paixao', 'box-delicada', 'vela-aromatica')
-   and not exists (select 1 from public.order_items i where i.product_id = p.id)
-   and not exists (select 1 from public.stock_movements m where m.product_id = p.id);
+-- Produtos de exemplo sem foto saem da vitrine. Ficam inativos (e não
+-- apagados) para preservar qualquer histórico de estoque ou venda.
+-- Categorias sem produto ativo deixam de aparecer no site.
 update public.products set active = false, featured = false
  where slug in ('buque-bordo', 'buque-rose-antique', 'buque-campestre', 'arranjo-jardim-ingles', 'arranjo-orquidea', 'box-paixao', 'box-delicada', 'vela-aromatica');
-
--- Categorias que ficaram sem produtos ativos.
-delete from public.categories c
- where c.slug in ('box', 'presentes')
-   and not exists (select 1 from public.products p where p.category_id = c.id and p.active);
 
 update public.subscription_plans set image_url = '/fotos/arranjo-sol.jpg' where slug = 'essencial' and image_url is null;
 update public.subscription_plans set image_url = '/fotos/arranjo-lirios.jpg' where slug = 'jardim' and image_url is null;
