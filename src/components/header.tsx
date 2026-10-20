@@ -3,10 +3,12 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
+import { CartLink } from "./cart-link";
 import { Logo } from "./logo";
 
 const nav = [
   { href: "/loja", label: "Loja" },
+  { href: "/loja?hoje=1", label: "Entrega hoje" },
   { href: "/assinaturas", label: "Assinaturas" },
   { href: "/workshops", label: "Workshops" },
   { href: "/#sobre", label: "Sobre" },
@@ -27,22 +29,19 @@ export function Header() {
               key={item.href}
               href={item.href}
               className={`text-sm tracking-wide transition-colors hover:text-wine ${
-                pathname.startsWith(item.href) && item.href !== "/#sobre" ? "text-wine" : "text-ink/80"
+                pathname === item.href ? "text-wine" : "text-ink/80"
               }`}
             >
               {item.label}
             </Link>
           ))}
-          <Link
-            href="/loja"
-            className="rounded-full bg-wine px-5 py-2 text-sm text-cream transition-colors hover:bg-wine-deep"
-          >
-            Encomendar
-          </Link>
+          <CartLink />
         </nav>
+        <div className="flex items-center gap-1 md:hidden">
+        <CartLink />
         <button
           type="button"
-          className="rounded-full p-2 text-wine md:hidden"
+          className="rounded-full p-2 text-wine"
           onClick={() => setOpen((v) => !v)}
           aria-expanded={open}
           aria-label={open ? "Fechar menu" : "Abrir menu"}
@@ -51,6 +50,7 @@ export function Header() {
             {open ? <path d="M6 6l12 12M18 6L6 18" /> : <path d="M4 7h16M4 12h16M4 17h16" />}
           </svg>
         </button>
+        </div>
       </div>
       {open && (
         <nav className="border-t border-rose-soft px-4 pb-4 md:hidden" aria-label="Principal">

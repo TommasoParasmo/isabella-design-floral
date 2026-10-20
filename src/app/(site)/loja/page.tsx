@@ -3,19 +3,36 @@ import Link from "next/link";
 import { ProductCard } from "@/components/product-card";
 import { SectionTitle } from "@/components/section-title";
 import { getCategories, getProducts } from "@/lib/catalog";
+import { storeConfig } from "@/lib/config";
+import { isSameDayOpen } from "@/lib/delivery";
 
 export const metadata: Metadata = { title: "Loja" };
 
-export default async function LojaPage({ searchParams }: { searchParams: Promise<{ categoria?: string }> }) {
-  const { categoria } = await searchParams;
-  const [categories, products] = await Promise.all([getCategories(), getProducts(categoria)]);
+export default async function LojaPage({ searchParams }: { searchParams: Promise<{ categoria?: string; hoje?: string }> }) {
+  const { categoria, hoje } = await searchParams;
+  const onlySameDay = hoje === "1";
+  const [categories, products] = await Promise.all([getCategories(), getProducts(categoria, onlySameDay)]);
+  const sameDayOpen = isSameDayOpen();
 
   return (
     <section className="mx-auto max-w-6xl px-4 py-16 sm:px-6">
-      <SectionTitle eyebrow="feito à mão" title="Loja" intro="Todos os pedidos podem ser agendados para o dia e período que você preferir." />
+      {onlySameDay ? (
+        <SectionTitle
+          eyebrow="para hoje"
+          title="Entrega hoje"
+          intro={
+            sameDayOpen
+              ? `Peças que saem hoje mesmo para pedidos feitos até ${storeConfig.sameDayCutoffHour}h.`
+              : `Os pedidos para hoje encerraram às ${storeConfig.sameDayCutoffHour}h. Estas peças podem ser agendadas a partir de amanhã.`
+          }
+        />
+      ) : (
+        <SectionTitle eyebrow="feito à mão" title="Loja" intro="Todos os pedidos podem ser agendados para o dia e período que você preferir." />
+      )}
 
       <nav className="mt-10 flex flex-wrap justify-center gap-2" aria-label="Categorias">
-        <FilterLink href="/loja" active={!categoria}>Todos</FilterLink>
+        <FilterLink href="/loja" active={!categoria && !onlySameDay}>Todos</FilterLink>
+        <FilterLink href="/loja?hoje=1" active={onlySameDay}>Entrega hoje</FilterLink>
         {categories.map((c) => (
           <FilterLink key={c.id} href={`/loja?categoria=${c.slug}`} active={categoria === c.slug}>
             {c.name}

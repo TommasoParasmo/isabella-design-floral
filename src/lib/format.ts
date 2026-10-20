@@ -20,3 +20,8 @@ export const frequencyLabel = {
   quinzenal: "a cada 15 dias",
   mensal: "por mês",
 } as const;
+
+export function installmentText(cents: number, max: number) {
+  if (max <= 1 || cents < 100 * max) return null;
+  return `ou ${max}x de ${formatPrice(Math.ceil(cents / max))}`;
+}

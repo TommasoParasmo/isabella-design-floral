@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { AddToCart } from "@/components/add-to-cart";
 import { FlowerArt } from "@/components/flower-art";
+import { storeConfig } from "@/lib/config";
 import { getProduct } from "@/lib/catalog";
-import { formatPrice } from "@/lib/format";
+import { formatPrice, installmentText } from "@/lib/format";
 import { whatsappLink } from "@/lib/site";
 
 export const revalidate = 60;
@@ -18,7 +20,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function ProductPage({ params }: Props) {
   const product = await getProduct((await params).slug);
   if (!product) notFound();
-  const soldOut = product.stock <= 0;
+  const installments = installmentText(product.price_cents, storeConfig.maxInstallments);
 
   return (
     <section className="mx-auto grid max-w-6xl gap-10 px-4 py-14 sm:px-6 md:grid-cols-2 md:gap-16">
@@ -36,30 +38,27 @@ export default async function ProductPage({ params }: Props) {
         </Link>
         <h1 className="mt-4 font-serif text-5xl text-ink">{product.name}</h1>
         <p className="mt-3 font-serif text-3xl text-wine">{formatPrice(product.price_cents)}</p>
+        {installments && <p className="text-sm text-muted">{installments} no cartão</p>}
         <p className="mt-6 leading-relaxed text-muted">{product.description}</p>
         <ul className="mt-6 space-y-2 text-sm text-ink/80">
           <li>• Montado à mão no dia da entrega</li>
           <li>• Entrega agendada em São Paulo (manhã, tarde ou noite)</li>
+          {product.same_day && (
+            <li>• Entrega no mesmo dia para pedidos até {storeConfig.sameDayCutoffHour}h</li>
+          )}
           <li>• Cartão com mensagem personalizada</li>
         </ul>
-        <div className="mt-8 flex flex-wrap gap-3">
-          <button
-            type="button"
-            disabled
-            className="rounded-full bg-wine px-8 py-3 text-sm text-cream disabled:opacity-50"
-            title="Carrinho chega na próxima etapa"
-          >
-            {soldOut ? "Esgotado" : "Adicionar ao carrinho"}
-          </button>
-          <a
-            href={whatsappLink(`Olá, Isa! Tenho interesse no ${product.name}.`)}
-            target="_blank"
-            rel="noreferrer"
-            className="rounded-full border border-wine px-8 py-3 text-sm text-wine hover:bg-wine hover:text-cream"
-          >
-            Pedir pelo WhatsApp
-          </a>
+        <div className="mt-8">
+          <AddToCart product={product} />
         </div>
+        <a
+          href={whatsappLink(`Olá, Isa! Tenho uma dúvida sobre o ${product.name}.`)}
+          target="_blank"
+          rel="noreferrer"
+          className="mt-4 self-start text-sm text-muted underline underline-offset-4 hover:text-wine"
+        >
+          Dúvidas? Fale com a Isa no WhatsApp
+        </a>
       </div>
     </section>
   );
