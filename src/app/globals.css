@@ -1,0 +1,49 @@
+@import "tailwindcss";
+
+:root {
+  --wine: #7a1b33;
+  --wine-deep: #561124;
+  --rose: #e8b4b8;
+  --rose-soft: #f2d5d3;
+  --blush: #f8ebe8;
+  --cream: #fdf8f6;
+  --ink: #2e1a20;
+  --muted: #7d6268;
+}
+
+@theme inline {
+  --color-wine: var(--wine);
+  --color-wine-deep: var(--wine-deep);
+  --color-rose: var(--rose);
+  --color-rose-soft: var(--rose-soft);
+  --color-blush: var(--blush);
+  --color-cream: var(--cream);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --font-sans: var(--font-montserrat);
+  --font-serif: var(--font-cormorant);
+  --font-script: var(--font-pinyon);
+}
+
+body {
+  background: var(--cream);
+  color: var(--ink);
+  font-family: var(--font-montserrat), system-ui, sans-serif;
+}
+
+/* Listras do ateliê: bordô e rosa, como na parede da loja */
+.stripes {
+  background-image: repeating-linear-gradient(
+    -18deg,
+    var(--wine) 0 22px,
+    var(--rose-soft) 22px 44px
+  );
+}
+
+.stripes-thin {
+  background-image: repeating-linear-gradient(
+    90deg,
+    var(--wine) 0 6px,
+    var(--rose-soft) 6px 12px
+  );
+}
