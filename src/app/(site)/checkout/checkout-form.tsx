@@ -110,7 +110,7 @@ export function CheckoutForm({ slots, cutoffHour, pickupAddress, maxInstallments
     <form onSubmit={submit} className="mt-12 grid gap-10 lg:grid-cols-[1fr_340px]">
       <div className="min-w-0 space-y-10">
         {/* Entrega ou retirada */}
-        <fieldset>
+        <fieldset className="min-w-0">
           <legend className="font-serif text-2xl">1. Como você quer receber?</legend>
           <div className="mt-4 grid grid-cols-2 gap-3">
             {(["entrega", "retirada"] as const).map((option) => (
@@ -132,7 +132,7 @@ export function CheckoutForm({ slots, cutoffHour, pickupAddress, maxInstallments
         </fieldset>
 
         {/* Data e período */}
-        <fieldset>
+        <fieldset className="min-w-0">
           <legend className="font-serif text-2xl">2. Quando?</legend>
           <p className="mt-1 text-xs text-muted">
             {allSameDay
@@ -177,7 +177,7 @@ export function CheckoutForm({ slots, cutoffHour, pickupAddress, maxInstallments
 
         {/* Endereço */}
         {fulfillment === "entrega" && (
-          <fieldset className="space-y-3">
+          <fieldset className="min-w-0 space-y-3">
             <legend className="font-serif text-2xl">3. Endereço de entrega</legend>
             <div className="grid gap-3 sm:grid-cols-[160px_1fr]">
               <input
@@ -204,7 +204,7 @@ export function CheckoutForm({ slots, cutoffHour, pickupAddress, maxInstallments
         )}
 
         {/* Cartão */}
-        <fieldset className="space-y-3">
+        <fieldset className="min-w-0 space-y-3">
           <legend className="font-serif text-2xl">{fulfillment === "entrega" ? "4" : "3"}. Para quem são as flores?</legend>
           <input className={inputClass} placeholder="Nome de quem vai receber (opcional)" value={recipientName} onChange={(e) => setRecipientName(e.target.value)} />
           <textarea
@@ -217,7 +217,7 @@ export function CheckoutForm({ slots, cutoffHour, pickupAddress, maxInstallments
         </fieldset>
 
         {/* Dados do comprador */}
-        <fieldset className="space-y-3">
+        <fieldset className="min-w-0 space-y-3">
           <legend className="font-serif text-2xl">{fulfillment === "entrega" ? "5" : "4"}. Seus dados</legend>
           <input className={inputClass} placeholder="Nome completo" autoComplete="name" required value={customer.name} onChange={(e) => setCustomer({ ...customer, name: e.target.value })} />
           <div className="grid gap-3 sm:grid-cols-2">
