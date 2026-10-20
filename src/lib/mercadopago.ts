@@ -16,9 +16,11 @@ export function siteUrl() {
 
 type PreferenceItem = { id: string; title: string; quantity: number; unit_price_cents: number };
 
+// external_reference identifica o que está sendo pago no webhook:
+// "<uuid>" = pedido, "sub:<uuid>" = assinatura presente, "ws:<uuid>" = workshop.
 export async function createPreference(input: {
-  orderId: string;
-  orderCode: string;
+  externalReference: string;
+  returnPath: string;
   items: PreferenceItem[];
   payer: { name: string; email: string };
 }) {
@@ -27,7 +29,7 @@ export async function createPreference(input: {
     headers: {
       Authorization: `Bearer ${token()}`,
       "Content-Type": "application/json",
-      "X-Idempotency-Key": input.orderId,
+      "X-Idempotency-Key": input.externalReference,
     },
     body: JSON.stringify({
       items: input.items.map((i) => ({
@@ -38,11 +40,11 @@ export async function createPreference(input: {
         currency_id: "BRL",
       })),
       payer: { name: input.payer.name, email: input.payer.email },
-      external_reference: input.orderId,
+      external_reference: input.externalReference,
       back_urls: {
-        success: `${siteUrl()}/pedido/${input.orderCode}`,
-        pending: `${siteUrl()}/pedido/${input.orderCode}`,
-        failure: `${siteUrl()}/pedido/${input.orderCode}`,
+        success: `${siteUrl()}${input.returnPath}`,
+        pending: `${siteUrl()}${input.returnPath}`,
+        failure: `${siteUrl()}${input.returnPath}`,
       },
       auto_return: "approved",
       notification_url: `${siteUrl()}/api/mercadopago/webhook`,
@@ -92,4 +94,53 @@ export function isValidSignature(headers: Headers, dataId: string) {
   const a = Buffer.from(expected);
   const b = Buffer.from(parts.v1);
   return a.length === b.length && timingSafeEqual(a, b);
+}
+
+// Assinatura recorrente (cobrança mensal automática no cartão).
+// https://www.mercadopago.com.br/developers/pt/reference/subscriptions/_preapproval/post
+export async function createPreapproval(input: {
+  externalReference: string;
+  reason: string;
+  payerEmail: string;
+  amountCents: number;
+  returnPath: string;
+}) {
+  const res = await fetch(`${API}/preapproval`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token()}`,
+      "Content-Type": "application/json",
+      "X-Idempotency-Key": input.externalReference,
+    },
+    body: JSON.stringify({
+      reason: input.reason,
+      external_reference: input.externalReference,
+      payer_email: input.payerEmail,
+      back_url: `${siteUrl()}${input.returnPath}`,
+      status: "pending",
+      auto_recurring: {
+        frequency: 1,
+        frequency_type: "months",
+        transaction_amount: input.amountCents / 100,
+        currency_id: "BRL",
+      },
+    }),
+  });
+  if (!res.ok) throw new Error(`Mercado Pago recusou a assinatura: ${res.status} ${await res.text()}`);
+  return (await res.json()) as { id: string; init_point: string };
+}
+
+export type MpPreapproval = {
+  id: string;
+  status: "pending" | "authorized" | "paused" | "cancelled" | string;
+  external_reference: string | null;
+};
+
+export async function getPreapproval(id: string): Promise<MpPreapproval> {
+  const res = await fetch(`${API}/preapproval/${encodeURIComponent(id)}`, {
+    headers: { Authorization: `Bearer ${token()}` },
+    cache: "no-store",
+  });
+  if (!res.ok) throw new Error(`Assinatura ${id} não encontrada: ${res.status}`);
+  return res.json();
 }

@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { FlowerArt } from "@/components/flower-art";
 import { SectionTitle } from "@/components/section-title";
 import { getUpcomingWorkshops } from "@/lib/catalog";
 import { formatDateTime, formatPrice } from "@/lib/format";
-import { whatsappLink } from "@/lib/site";
 
 export const metadata: Metadata = { title: "Workshops" };
 export const revalidate = 60;
@@ -28,7 +28,7 @@ export default async function WorkshopsPage() {
               <p className="text-xs tracking-wider text-muted uppercase">
                 {formatDateTime(w.starts_at)} · {Math.round(w.duration_minutes / 60)}h · {w.location}
               </p>
-              <h2 className="mt-2 font-serif text-4xl">{w.title}</h2>
+              <h2 className="mt-2 font-serif text-4xl"><Link href={`/workshops/${w.slug}`} className="hover:text-wine">{w.title}</Link></h2>
               <p className="mt-3 leading-relaxed text-muted">{w.description}</p>
               <ul className="mt-4 flex flex-wrap gap-2 text-xs">
                 {w.includes.map((item) => (
@@ -39,14 +39,12 @@ export default async function WorkshopsPage() {
                 <p className="font-serif text-3xl text-wine">{formatPrice(w.price_cents)}</p>
                 <p className="text-sm text-muted">{w.seats_left > 0 ? `${w.seats_left} de ${w.capacity} vagas` : "Turma esgotada"}</p>
                 {w.seats_left > 0 && (
-                  <a
-                    href={whatsappLink(`Olá, Isa! Quero me inscrever no workshop ${w.title}.`)}
-                    target="_blank"
-                    rel="noreferrer"
+                  <Link
+                    href={`/workshops/${w.slug}`}
                     className="rounded-full bg-wine px-6 py-3 text-sm text-cream hover:bg-wine-deep md:ml-auto"
                   >
                     Garantir minha vaga
-                  </a>
+                  </Link>
                 )}
               </div>
             </div>

@@ -15,10 +15,11 @@ export function formatDateTime(iso: string) {
   }).format(new Date(iso));
 }
 
+// O preço do plano é sempre mensal; a frequência é a das entregas.
 export const frequencyLabel = {
-  semanal: "por semana",
-  quinzenal: "a cada 15 dias",
-  mensal: "por mês",
+  semanal: "por mês · entrega toda semana",
+  quinzenal: "por mês · entrega a cada 15 dias",
+  mensal: "por mês · uma entrega mensal",
 } as const;
 
 export function installmentText(cents: number, max: number) {

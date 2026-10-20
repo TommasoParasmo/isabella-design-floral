@@ -127,3 +127,36 @@ export async function registerCounterSale(input: z.input<typeof counterSaleSchem
   revalidatePath("/admin");
   return { ok: true as const, orderId: orderId as string };
 }
+
+const workshopSchema = z.object({
+  title: z.string().trim().min(2),
+  slug: z.string().trim().regex(/^[a-z0-9-]+$/),
+  description: z.string().trim().max(2000).optional(),
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  time: z.string().regex(/^\d{2}:\d{2}$/),
+  price: z.string().transform((v) => Math.round(Number(v.replace(/\./g, "").replace(",", ".")) * 100)),
+  capacity: z.coerce.number().int().min(1),
+  duration_hours: z.coerce.number().min(0.5).default(3),
+  includes: z.string().optional(),
+});
+
+export async function createWorkshop(formData: FormData) {
+  const { supabase } = await requireAdmin();
+  const data = workshopSchema.parse(Object.fromEntries(formData));
+  if (!Number.isFinite(data.price) || data.price < 0) throw new Error("Preço inválido");
+  const { error } = await supabase.from("workshops").insert({
+    title: data.title,
+    slug: data.slug,
+    description: data.description || null,
+    // Horário de São Paulo (sem horário de verão desde 2019)
+    starts_at: `${data.date}T${data.time}:00-03:00`,
+    duration_minutes: Math.round(data.duration_hours * 60),
+    price_cents: data.price,
+    capacity: data.capacity,
+    includes: (data.includes ?? "").split(",").map((s) => s.trim()).filter(Boolean),
+  });
+  if (error) throw error;
+  revalidatePath("/admin/workshops");
+  revalidatePath("/workshops");
+  revalidatePath("/");
+}

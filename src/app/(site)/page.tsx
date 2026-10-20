@@ -2,14 +2,15 @@ import Link from "next/link";
 import { FlowerArt } from "@/components/flower-art";
 import { ProductCard } from "@/components/product-card";
 import { SectionTitle } from "@/components/section-title";
-import { getCategories, getFeaturedProducts, getPlans, getUpcomingWorkshops } from "@/lib/catalog";
+import { getActiveCollection, getCategories, getFeaturedProducts, getPlans, getUpcomingWorkshops } from "@/lib/catalog";
 import { formatDateTime, formatPrice, frequencyLabel } from "@/lib/format";
 import { whatsappLink } from "@/lib/site";
 
 export const revalidate = 60;
 
 export default async function Home() {
-  const [featured, categories, plans, workshops] = await Promise.all([
+  const [collection, featured, categories, plans, workshops] = await Promise.all([
+    getActiveCollection(),
     getFeaturedProducts(),
     getCategories(),
     getPlans(),
@@ -46,6 +47,29 @@ export default async function Home() {
           </div>
         </div>
       </section>
+
+      {/* Coleção sazonal (aparece só dentro das datas cadastradas) */}
+      {collection && collection.products.length > 0 && (
+        <section className="border-b border-rose-soft bg-blush/60">
+          <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6">
+            <div className="flex flex-wrap items-end justify-between gap-4">
+              <div>
+                <p className="font-script text-3xl text-wine/80">edição limitada</p>
+                <h2 className="mt-1 font-serif text-4xl sm:text-5xl">{collection.category.headline ?? collection.category.name}</h2>
+                <p className="mt-2 max-w-md text-sm text-muted">{collection.category.description}</p>
+              </div>
+              <Link href={`/loja?categoria=${collection.category.slug}`} className="rounded-full border border-wine px-6 py-2.5 text-sm text-wine hover:bg-wine hover:text-cream">
+                Ver a coleção
+              </Link>
+            </div>
+            <div className="mt-10 grid grid-cols-2 gap-x-5 gap-y-10 lg:grid-cols-4">
+              {collection.products.slice(0, 4).map((product) => (
+                <ProductCard key={product.id} product={product} />
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Destaques */}
       <section className="mx-auto max-w-6xl px-4 py-20 sm:px-6">
@@ -130,7 +154,7 @@ export default async function Home() {
         <SectionTitle eyebrow="aprenda com a Isa" title="Workshops" intro="Encontros no ateliê para aprender técnicas de design floral e levar sua criação para casa." />
         <div className="mt-12 grid gap-6 md:grid-cols-2">
           {workshops.map((w) => (
-            <Link key={w.id} href={`/workshops#${w.slug}`} className="group flex gap-5 rounded-3xl border border-rose-soft bg-cream p-5 transition-colors hover:border-wine">
+            <Link key={w.id} href={`/workshops/${w.slug}`} className="group flex gap-5 rounded-3xl border border-rose-soft bg-cream p-5 transition-colors hover:border-wine">
               <div className="h-28 w-24 shrink-0 overflow-hidden rounded-t-[999px] rounded-b-xl">
                 <FlowerArt seed={w.slug} className="h-full w-full" />
               </div>

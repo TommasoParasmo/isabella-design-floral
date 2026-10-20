@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { SectionTitle } from "@/components/section-title";
 import { getPlans } from "@/lib/catalog";
 import { formatPrice, frequencyLabel } from "@/lib/format";
-import { whatsappLink } from "@/lib/site";
 
 export const metadata: Metadata = { title: "Assinaturas florais" };
 export const revalidate = 60;
@@ -14,7 +14,7 @@ export default async function AssinaturasPage() {
       <SectionTitle
         eyebrow="flores sem esforço"
         title="Assinaturas florais"
-        intro="Receba flores frescas em casa ou no escritório, com curadoria da Isa e cobrança automática. Pause ou cancele quando quiser."
+        intro="Receba flores frescas em casa ou no escritório, com curadoria da Isa. Assine para você com cobrança mensal, sem fidelidade, ou dê de presente por 3, 6 ou 12 meses."
       />
       <div className="mt-14 grid gap-6 md:grid-cols-3">
         {plans.map((plan, i) => (
@@ -31,16 +31,14 @@ export default async function AssinaturasPage() {
                 <li key={perk}>✿ {perk}</li>
               ))}
             </ul>
-            <a
-              href={whatsappLink(`Olá, Isa! Quero assinar o plano ${plan.name}.`)}
-              target="_blank"
-              rel="noreferrer"
+            <Link
+              href={`/assinaturas/${plan.slug}`}
               className={`mt-8 rounded-full px-6 py-3 text-center text-sm ${
                 i === 1 ? "bg-rose text-wine-deep hover:bg-cream" : "bg-wine text-cream hover:bg-wine-deep"
               }`}
             >
-              Quero assinar
-            </a>
+              Assinar ou presentear
+            </Link>
           </div>
         ))}
       </div>

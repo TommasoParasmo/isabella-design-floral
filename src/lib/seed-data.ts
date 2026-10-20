@@ -7,6 +7,7 @@ export const seedCategories: Category[] = [
   { id: "c1", slug: "buques", name: "Buquês", description: "Buquês assinados, montados à mão no dia da entrega.", position: 1 },
   { id: "c2", slug: "arranjos", name: "Arranjos", description: "Arranjos em vasos e cachepôs para mesa e decoração.", position: 2 },
   { id: "c3", slug: "box", name: "Flower Box", description: "Caixas com flores frescas, prontas para presentear.", position: 3 },
+  { id: "c0", slug: "natal", name: "Natal", description: "Guirlandas, centros de mesa e arranjos para as festas.", position: 0, seasonal: true, active_from: "2026-11-01", active_until: "2026-12-25", headline: "Coleção de Natal" },
   { id: "c4", slug: "presentes", name: "Presentes", description: "Complementos para acompanhar as flores.", position: 4 },
 ];
 
@@ -30,6 +31,9 @@ export const seedProducts: Product[] = [
   p("p5", "arranjo-orquidea", "Orquídea Phalaenopsis", "Orquídea dupla em cachepô de cimento queimado.", "c2", 21900, 6, false, false),
   p("p6", "box-paixao", "Flower Box Paixão", "Caixa redonda com 12 rosas vermelhas.", "c3", 26900, 7, true),
   p("p7", "box-delicada", "Flower Box Delicada", "Caixa com rosas rosé, mini rosas e gipsófila.", "c3", 22900, 9),
+  p("p9", "guirlanda-bordo", "Guirlanda Bordô", "Guirlanda de pinheiro natural com rosas secas e fita de veludo vinho.", "c0", 32900, 10, false, false),
+  p("p10", "centro-de-mesa-natal", "Centro de Mesa Noite Feliz", "Arranjo baixo com rosas, pinhas e velas para a ceia.", "c0", 38900, 8, false, false),
+  p("p11", "box-natal", "Flower Box Natal", "Caixa com rosas vermelhas, eucalipto e ramos de pinheiro.", "c0", 27900, 12),
   p("p8", "vela-aromatica", "Vela Aromática Flor de Figo", "Vela de soja 180g para acompanhar o presente.", "c4", 7900, 15),
 ];
 
