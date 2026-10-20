@@ -22,7 +22,12 @@ export default async function WorkshopsPage() {
         {workshops.map((w) => (
           <article key={w.id} id={w.slug} className="grid scroll-mt-24 gap-6 rounded-3xl border border-rose-soft bg-cream p-6 md:grid-cols-[220px_1fr]">
             <div className="aspect-[4/5] overflow-hidden rounded-t-[999px] rounded-b-2xl">
-              <FlowerArt seed={w.slug} className="h-full w-full" />
+              {w.image_url ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={w.image_url} alt="" className="h-full w-full object-cover" />
+              ) : (
+                <FlowerArt seed={w.slug} className="h-full w-full" />
+              )}
             </div>
             <div className="flex flex-col">
               <p className="text-xs tracking-wider text-muted uppercase">
