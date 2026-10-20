@@ -93,13 +93,21 @@ export function buildNfe(input: {
   const isCompany = recipient.document.length === 14;
   const productsCents = input.items.reduce((sum, i) => sum + i.unitPriceCents * i.quantity, 0);
 
-  // O desconto é rateado entre os itens, como a SEFAZ exige.
-  let discountLeft = input.discountCents;
+  // O desconto é rateado entre os itens, como a SEFAZ exige. Cada item
+  // recebe a parte arredondada para baixo e os centavos que sobram vão um a
+  // um para os primeiros itens, então a soma bate exatamente com o total.
+  const grosses = input.items.map((item) => item.unitPriceCents * item.quantity);
+  const shares = grosses.map((gross) => (productsCents ? Math.floor((input.discountCents * gross) / productsCents) : 0));
+  let remainder = input.discountCents - shares.reduce((a, b) => a + b, 0);
+  for (let i = 0; remainder > 0 && i < shares.length; i++) {
+    if (shares[i] < grosses[i]) {
+      shares[i] += 1;
+      remainder -= 1;
+    }
+  }
   const items = input.items.map((item, index) => {
-    const gross = item.unitPriceCents * item.quantity;
-    const isLast = index === input.items.length - 1;
-    const discount = isLast ? discountLeft : Math.round((input.discountCents * gross) / productsCents);
-    discountLeft -= discount;
+    const gross = grosses[index];
+    const discount = shares[index];
     return {
       numero_item: index + 1,
       codigo_produto: item.code,
@@ -212,6 +220,7 @@ export type FiscalResult = {
   pdfUrl?: string;
   xmlUrl?: string;
   error?: string;
+  httpStatus?: number;
   raw: Record<string, unknown>;
 };
 
@@ -228,7 +237,8 @@ function errorText(data: Record<string, unknown>) {
   return (data.mensagem_sefaz ?? data.mensagem) as string | undefined;
 }
 
-function normalize(httpOk: boolean, data: Record<string, unknown>): FiscalResult {
+function normalize(httpStatus: number, data: Record<string, unknown>): FiscalResult {
+  const httpOk = httpStatus >= 200 && httpStatus < 300;
   const providerStatus = String(data.status ?? "");
   const status: FiscalStatus = !httpOk
     ? "erro"
@@ -247,21 +257,22 @@ function normalize(httpOk: boolean, data: Record<string, unknown>): FiscalResult
     pdfUrl: absolute(data.caminho_danfe ?? data.url_danfse ?? data.caminho_pdf_nota_fiscal ?? data.url),
     xmlUrl: absolute(data.caminho_xml_nota_fiscal),
     error: status === "erro" || status === "rejeitado" ? errorText(data) : undefined,
+    httpStatus,
     raw: data,
   };
 }
 
 export async function sendDocument(kind: FiscalKind, ref: string, payload: unknown) {
   const res = await focus("POST", `${endpoint(kind)}?ref=${encodeURIComponent(ref)}`, payload);
-  return normalize(res.ok, res.data);
+  return normalize(res.httpStatus, res.data);
 }
 
 export async function consultDocument(kind: FiscalKind, ref: string) {
   const res = await focus("GET", `${endpoint(kind)}/${encodeURIComponent(ref)}`);
-  return normalize(res.ok, res.data);
+  return normalize(res.httpStatus, res.data);
 }
 
 export async function cancelDocument(kind: FiscalKind, ref: string, reason: string) {
   const res = await focus("DELETE", `${endpoint(kind)}/${encodeURIComponent(ref)}`, { justificativa: reason });
-  return normalize(res.ok, res.data);
+  return normalize(res.httpStatus, res.data);
 }

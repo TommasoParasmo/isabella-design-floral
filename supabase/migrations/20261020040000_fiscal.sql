@@ -28,3 +28,11 @@ $$;
 
 revoke execute on function public.next_dps_number() from public, anon;
 grant execute on function public.next_dps_number() to authenticated;
+
+-- No máximo uma nota válida (ou em processamento) por venda.
+create unique index fiscal_documents_one_active_per_order
+  on public.fiscal_documents (order_id, kind)
+  where order_id is not null and status in ('processando', 'autorizado');
+create unique index fiscal_documents_one_active_per_registration
+  on public.fiscal_documents (workshop_registration_id, kind)
+  where workshop_registration_id is not null and status in ('processando', 'autorizado');

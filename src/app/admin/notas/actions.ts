@@ -58,8 +58,11 @@ function firstError(error: unknown) {
   return error instanceof Error ? error.message : "Não foi possível emitir a nota.";
 }
 
-// Envia e grava o resultado. Se a chamada cair no meio, a nota fica como
-// erro para não travar uma nova tentativa.
+const NO_ANSWER = "A Focus NFe não respondeu. Clique em Atualizar para saber se a nota foi recebida antes de tentar de novo.";
+
+// Envia e grava o resultado. Sem resposta clara (queda de conexão ou erro
+// 5xx), a nota pode ter sido recebida: fica em processamento com a mesma
+// referência até a consulta confirmar, para não emitir em duplicidade.
 async function sendAndStore(
   supabase: Awaited<ReturnType<typeof requireAdmin>>["supabase"],
   docId: string,
@@ -70,8 +73,9 @@ async function sendAndStore(
   let result: FiscalResult;
   try {
     result = await sendDocument(kind, ref, payload);
-  } catch (error) {
-    result = { status: "erro", error: firstError(error), raw: {} };
+    if (result.httpStatus && result.httpStatus >= 500) result = { status: "processando", error: NO_ANSWER, raw: result.raw };
+  } catch {
+    result = { status: "processando", error: NO_ANSWER, raw: {} };
   }
   await supabase.from("fiscal_documents").update(toColumns(result)).eq("id", docId);
   return result;
@@ -91,19 +95,17 @@ function toColumns(result: FiscalResult) {
   };
 }
 
-// Já existe uma nota válida (ou em processamento) para este pedido?
-async function hasActiveDocument(
+// Reserva a nota no banco antes de enviar. Um índice único impede duas
+// notas válidas (ou em processamento) para a mesma venda, mesmo com dois
+// cliques ou duas abas ao mesmo tempo.
+async function reserveDocument(
   supabase: Awaited<ReturnType<typeof requireAdmin>>["supabase"],
-  column: "order_id" | "workshop_registration_id",
-  id: string,
-) {
-  const { data } = await supabase
-    .from("fiscal_documents")
-    .select("id")
-    .eq(column, id)
-    .in("status", ["processando", "autorizado"])
-    .limit(1);
-  return (data ?? []).length > 0;
+  row: Record<string, unknown>,
+): Promise<{ id: string } | null> {
+  const { data, error } = await supabase.from("fiscal_documents").insert(row).select("id").single();
+  if (error?.code === "23505") return null;
+  if (error) throw error;
+  return data;
 }
 
 export async function issueOrderInvoice(orderId: string, _prev: FiscalFormState, formData: FormData): Promise<FiscalFormState> {
@@ -120,7 +122,6 @@ export async function issueOrderInvoice(orderId: string, _prev: FiscalFormState,
       .single();
     if (error) throw error;
     if (["aguardando_pagamento", "cancelado"].includes(order.status)) return { error: "Só dá para emitir nota de pedido pago." };
-    if (await hasActiveDocument(supabase, "order_id", orderId)) return { error: "Este pedido já tem uma nota emitida ou em processamento." };
 
     type Item = { product_id: string | null; product_name: string; quantity: number; unit_price_cents: number; products: { ncm: string; cfop: string } | null };
     const payload = buildNfe({
@@ -139,17 +140,13 @@ export async function issueOrderInvoice(orderId: string, _prev: FiscalFormState,
     });
 
     const ref = `pedido-${order.code}-${Date.now().toString(36)}`;
-    const { data: doc, error: insertError } = await supabase
-      .from("fiscal_documents")
-      .insert({ kind: "nfe", order_id: orderId, provider_ref: ref, environment: fiscalEnvironment(), recipient })
-      .select("id")
-      .single();
-    if (insertError) throw insertError;
+    const doc = await reserveDocument(supabase, { kind: "nfe", order_id: orderId, provider_ref: ref, environment: fiscalEnvironment(), recipient });
+    if (!doc) return { error: "Este pedido já tem uma nota emitida ou em processamento." };
 
     const result = await sendAndStore(supabase, doc.id, "nfe", ref, payload);
     revalidatePath(`/admin/pedidos/${orderId}`);
     revalidatePath("/admin/notas");
-    if (result.status === "erro" || result.status === "rejeitado") return { error: result.error ?? "A nota foi recusada." };
+    if (result.error || result.status === "erro" || result.status === "rejeitado") return { error: result.error ?? "A nota foi recusada." };
     return { ok: "Nota enviada. A autorização da SEFAZ leva alguns segundos; atualize em seguida." };
   } catch (error) {
     return { error: firstError(error) };
@@ -170,13 +167,23 @@ export async function issueWorkshopInvoice(registrationId: string, _prev: Fiscal
       .single();
     if (error) throw error;
     if (reg.status !== "confirmada") return { error: "Só dá para emitir nota de inscrição confirmada." };
-    if (await hasActiveDocument(supabase, "workshop_registration_id", registrationId)) {
-      return { error: "Esta inscrição já tem uma nota emitida ou em processamento." };
-    }
+
+    const ref = `workshop-${registrationId.slice(0, 8)}-${Date.now().toString(36)}`;
+    const doc = await reserveDocument(supabase, {
+      kind: "nfse",
+      workshop_registration_id: registrationId,
+      provider_ref: ref,
+      environment: fiscalEnvironment(),
+      recipient,
+    });
+    if (!doc) return { error: "Esta inscrição já tem uma nota emitida ou em processamento." };
 
     const workshop = reg.workshops as unknown as { title: string; starts_at: string; price_cents: number };
     const { data: dpsNumber, error: seqError } = await supabase.rpc("next_dps_number");
-    if (seqError) throw seqError;
+    if (seqError) {
+      await supabase.from("fiscal_documents").update({ status: "erro", error_message: seqError.message }).eq("id", doc.id);
+      throw seqError;
+    }
 
     const date = new Date(workshop.starts_at).toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo" });
     const payload = buildNfse({
@@ -186,18 +193,10 @@ export async function issueWorkshopInvoice(registrationId: string, _prev: Fiscal
       recipient,
     });
 
-    const ref = `workshop-${registrationId.slice(0, 8)}-${Date.now().toString(36)}`;
-    const { data: doc, error: insertError } = await supabase
-      .from("fiscal_documents")
-      .insert({ kind: "nfse", workshop_registration_id: registrationId, provider_ref: ref, environment: fiscalEnvironment(), recipient })
-      .select("id")
-      .single();
-    if (insertError) throw insertError;
-
     const result = await sendAndStore(supabase, doc.id, "nfse", ref, payload);
     revalidatePath("/admin/workshops");
     revalidatePath("/admin/notas");
-    if (result.status === "erro" || result.status === "rejeitado") return { error: result.error ?? "A nota foi recusada." };
+    if (result.error || result.status === "erro" || result.status === "rejeitado") return { error: result.error ?? "A nota foi recusada." };
     return { ok: "Nota enviada. Atualize em alguns segundos para ver o número." };
   } catch (error) {
     return { error: firstError(error) };
@@ -224,8 +223,16 @@ function revalidateDocument(orderId: string | null) {
 export async function refreshFiscalDocument(id: string) {
   const { supabase, doc } = await loadDocument(id);
   const result = await consultDocument(doc.kind, doc.provider_ref);
-  // Uma consulta que falhou (rede, 404) não apaga o que já sabemos da nota.
-  if (result.status !== "erro") await supabase.from("fiscal_documents").update(toColumns(result)).eq("id", id);
+  if (result.httpStatus === 404 && doc.status === "processando") {
+    // A Focus nunca recebeu esta referência: libera uma nova emissão.
+    await supabase
+      .from("fiscal_documents")
+      .update({ status: "erro", error_message: "A Focus NFe não recebeu esta nota. Pode emitir de novo.", updated_at: new Date().toISOString() })
+      .eq("id", id);
+  } else if (result.status !== "erro") {
+    // Outras falhas de consulta não apagam o que já sabemos da nota.
+    await supabase.from("fiscal_documents").update(toColumns(result)).eq("id", id);
+  }
   revalidateDocument(doc.order_id);
 }
 
