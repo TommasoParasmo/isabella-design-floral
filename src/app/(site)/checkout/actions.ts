@@ -84,6 +84,20 @@ export async function placeOrder(input: CheckoutInput): Promise<CheckoutResult> 
     return { ok: false, error: "Alguns itens do carrinho não podem ser entregues hoje." };
   }
 
+  // Lotação do período: conta pedidos pagos e os aguardando pagamento há menos de 30 min.
+  const { data: slotRow } = await supabase.from("delivery_slots").select("max_orders").eq("id", slot.id).single();
+  const holdSince = new Date(Date.now() - 30 * 60 * 1000).toISOString();
+  const { count: booked } = await supabase
+    .from("orders")
+    .select("id", { count: "exact", head: true })
+    .eq("scheduled_date", data.scheduledDate)
+    .eq("delivery_slot_id", slot.id)
+    .neq("status", "cancelado")
+    .or(`status.neq.aguardando_pagamento,created_at.gt.${holdSince}`);
+  if (slotRow && (booked ?? 0) >= slotRow.max_orders) {
+    return { ok: false, error: "Esse período já está lotado. Escolha outro horário ou outro dia." };
+  }
+
   const subtotal = lines.reduce((n, l) => n + l.product.price_cents * l.quantity, 0);
   const deliveryFee = data.fulfillment === "entrega" ? slot.fee_cents : 0;
 
