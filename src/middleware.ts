@@ -19,11 +19,10 @@ export async function middleware(request: NextRequest) {
     },
   });
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // Confere o token localmente (chave assimétrica) e renova a sessão se precisar.
+  const { data } = await supabase.auth.getClaims();
 
-  if (!user && request.nextUrl.pathname.startsWith("/admin")) {
+  if (!data?.claims?.sub && request.nextUrl.pathname.startsWith("/admin")) {
     const url = request.nextUrl.clone();
     url.pathname = "/entrar";
     url.searchParams.set("voltar", request.nextUrl.pathname);
