@@ -17,6 +17,7 @@ export function Footer() {
             <li><Link href="/loja" className="hover:text-cream">Loja</Link></li>
             <li><Link href="/assinaturas" className="hover:text-cream">Assinaturas florais</Link></li>
             <li><Link href="/workshops" className="hover:text-cream">Workshops</Link></li>
+            <li><Link href="/eventos" className="hover:text-cream">Eventos</Link></li>
           </ul>
         </div>
         <div className="text-sm">
