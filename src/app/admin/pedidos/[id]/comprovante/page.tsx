@@ -36,6 +36,7 @@ export default async function ComprovantePage({ params }: { params: Promise<{ id
   const payment = order.payment_method ? (paymentLabel[order.payment_method] ?? order.payment_method.replace(/_/g, " ")) : null;
   const cnpj = process.env.FISCAL_CNPJ?.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, "$1.$2.$3/$4-$5");
 
+  const unpaid = ["aguardando_pagamento", "cancelado"].includes(order.status);
   const text = [
     `*${site.name} ${site.tagline}*`,
     `Comprovante do pedido #${order.code} · ${date}`,
@@ -57,7 +58,7 @@ export default async function ComprovantePage({ params }: { params: Promise<{ id
       <div className="flex items-center justify-between print:hidden">
         <Link href={`/admin/pedidos/${order.id}`} className="text-xs text-muted hover:text-wine">← Pedido</Link>
       </div>
-      <ReceiptActions whatsappUrl={whatsappUrl} />
+      {!unpaid && <ReceiptActions whatsappUrl={whatsappUrl} />}
 
       <article className="space-y-4 rounded-2xl border border-rose-soft bg-white p-6 text-sm print:rounded-none print:border-0 print:p-0">
         <header className="text-center">
@@ -66,7 +67,7 @@ export default async function ComprovantePage({ params }: { params: Promise<{ id
           {cnpj && <p className="text-xs text-muted">CNPJ {cnpj}</p>}
         </header>
 
-        {["aguardando_pagamento", "cancelado"].includes(order.status) && (
+        {unpaid && (
           <p className="rounded-xl bg-wine/10 p-2 text-center text-xs font-medium text-wine">
             {order.status === "cancelado" ? "Pedido cancelado" : "Pagamento ainda não confirmado"}
           </p>
