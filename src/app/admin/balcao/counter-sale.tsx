@@ -93,7 +93,7 @@ export function CounterSale({ products }: { products: Product[] }) {
           ))}
         </div>
         <input value={discount} onChange={(e) => setDiscount(e.target.value)} placeholder="Desconto (R$)" inputMode="decimal" className="w-full rounded-xl border border-rose-soft bg-cream px-3 py-2 text-sm" />
-        <input value={cpf} onChange={(e) => setCpf(e.target.value)} placeholder="CPF na nota (opcional)" inputMode="numeric" className="w-full rounded-xl border border-rose-soft bg-cream px-3 py-2 text-sm" />
+        <input value={cpf} onChange={(e) => setCpf(e.target.value)} placeholder="CPF do cliente (opcional)" inputMode="numeric" className="w-full rounded-xl border border-rose-soft bg-cream px-3 py-2 text-sm" />
         <p className="flex justify-between border-t border-rose-soft pt-3">
           <span>Total</span><span className="font-serif text-3xl text-wine">{formatPrice(total)}</span>
         </p>
