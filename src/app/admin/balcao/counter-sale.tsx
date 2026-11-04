@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState, useTransition } from "react";
 import { formatPrice } from "@/lib/format";
 import { registerCounterSale } from "../actions";
@@ -17,7 +18,7 @@ export function CounterSale({ products }: { products: Product[] }) {
   const [method, setMethod] = useState<(typeof methods)[number]["id"]>("pix");
   const [cpf, setCpf] = useState("");
   const [discount, setDiscount] = useState("");
-  const [message, setMessage] = useState<{ ok: boolean; text: string } | null>(null);
+  const [message, setMessage] = useState<{ ok: boolean; text: string; orderId?: string } | null>(null);
   const [pending, startTransition] = useTransition();
 
   const lines = products.filter((p) => cart[p.id]);
@@ -47,7 +48,7 @@ export function CounterSale({ products }: { products: Product[] }) {
         setCart({});
         setCpf("");
         setDiscount("");
-        setMessage({ ok: true, text: `Venda registrada: ${formatPrice(total)}.` });
+        setMessage({ ok: true, text: `Venda registrada: ${formatPrice(total)}.`, orderId: result.orderId });
       } else {
         setMessage({ ok: false, text: result.error });
       }
@@ -96,7 +97,16 @@ export function CounterSale({ products }: { products: Product[] }) {
         <p className="flex justify-between border-t border-rose-soft pt-3">
           <span>Total</span><span className="font-serif text-3xl text-wine">{formatPrice(total)}</span>
         </p>
-        {message && <p className={`text-sm ${message.ok ? "text-green-800" : "text-wine"}`} role="status">{message.text}</p>}
+        {message && (
+          <p className={`text-sm ${message.ok ? "text-green-800" : "text-wine"}`} role="status">
+            {message.text}{" "}
+            {message.orderId && (
+              <Link href={`/admin/pedidos/${message.orderId}/comprovante`} className="underline hover:text-wine">
+                Ver comprovante
+              </Link>
+            )}
+          </p>
+        )}
         <button
           type="button"
           disabled={pending || lines.length === 0}

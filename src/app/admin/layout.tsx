@@ -19,8 +19,8 @@ const nav = [
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const { name } = await requireAdmin();
   return (
-    <div className="min-h-screen bg-cream">
-      <header className="bg-wine text-cream">
+    <div className="min-h-screen bg-cream print:bg-white">
+      <header className="bg-wine text-cream print:hidden">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-6">
           <Link href="/admin" className="font-script text-3xl text-rose">Painel do ateliê</Link>
           <div className="flex items-center gap-4 text-xs text-rose/80">
@@ -37,7 +37,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           ))}
         </nav>
       </header>
-      <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6">{children}</main>
+      <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 print:p-0">{children}</main>
     </div>
   );
 }
