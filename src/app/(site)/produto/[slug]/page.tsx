@@ -2,9 +2,10 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AddToCart } from "@/components/add-to-cart";
+import { BuildBouquet } from "@/components/build-bouquet";
 import { FlowerArt } from "@/components/flower-art";
 import { storeConfig } from "@/lib/config";
-import { getProduct } from "@/lib/catalog";
+import { getFlowers, getProduct } from "@/lib/catalog";
 import { formatPrice, installmentText } from "@/lib/format";
 import { whatsappLink } from "@/lib/site";
 
@@ -20,6 +21,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function ProductPage({ params }: Props) {
   const product = await getProduct((await params).slug);
   if (!product) notFound();
+  const flowers = product.flower_count ? await getFlowers() : [];
   const installments = installmentText(product.price_cents, storeConfig.maxInstallments);
 
   return (
@@ -37,10 +39,14 @@ export default async function ProductPage({ params }: Props) {
           ← Voltar para a loja
         </Link>
         <h1 className="mt-4 font-serif text-5xl text-ink">{product.name}</h1>
-        <p className="mt-3 font-serif text-3xl text-wine">{formatPrice(product.price_cents)}</p>
+        <p className="mt-3 font-serif text-3xl text-wine">
+          {product.flower_count && flowers.some((f) => f.extra_price_cents > 0) && <span className="mr-2 font-sans text-sm text-muted">a partir de</span>}
+          {formatPrice(product.price_cents)}
+        </p>
         {installments && <p className="text-sm text-muted">{installments} no cartão</p>}
         <p className="mt-6 leading-relaxed text-muted">{product.description}</p>
         <ul className="mt-6 space-y-2 text-sm text-ink/80">
+          {product.flower_count && <li>• {product.flower_count} flores escolhidas por você</li>}
           <li>• Montado à mão no dia da entrega</li>
           <li>• Entrega agendada em São Paulo (manhã, tarde ou noite)</li>
           {product.same_day && (
@@ -49,7 +55,7 @@ export default async function ProductPage({ params }: Props) {
           <li>• Cartão com mensagem personalizada</li>
         </ul>
         <div className="mt-8">
-          <AddToCart product={product} />
+          {product.flower_count ? <BuildBouquet product={product} flowers={flowers} /> : <AddToCart product={product} />}
         </div>
         <a
           href={whatsappLink(`Olá, Isa! Tenho uma dúvida sobre o ${product.name}.`)}

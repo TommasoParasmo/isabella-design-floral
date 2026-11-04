@@ -26,3 +26,9 @@ export function installmentText(cents: number, max: number) {
   if (max <= 1 || cents < 100 * max) return null;
   return `ou ${max}x de ${formatPrice(Math.ceil(cents / max))}`;
 }
+
+// "6 Rosa, 4 Margarida" a partir das flores gravadas no item do pedido.
+export function flowerSummary(flowers: { name: string; quantity: number }[] | null | undefined) {
+  if (!flowers?.length) return null;
+  return flowers.map((f) => `${f.quantity} ${f.name}`).join(", ");
+}

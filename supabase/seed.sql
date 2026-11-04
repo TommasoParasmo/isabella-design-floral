@@ -5,19 +5,10 @@ insert into public.categories (slug, name, description, position) values
   ('arranjos', 'Arranjos', 'Arranjos em vasos para mesa, casa e recepções.', 2)
 on conflict (slug) do nothing;
 
--- Fotos tiradas dos stories da Isa (public/fotos).
-insert into public.products (slug, name, description, category_id, price_cents, stock, featured, image_url) values
-  ('buque-rose', 'Buquê Rosé', 'Cravos e mini rosas em tons de rosa, em papel perolado com listras douradas e laço de cetim.', (select id from public.categories where slug = 'buques'), 24900, 10, true, '/fotos/buque-rose.jpg'),
-  ('buque-doce-rosa', 'Buquê Doce Rosa', 'Cravos mesclados e mini rosas salmão, com papel perolado e fita rosa listrada.', (select id from public.categories where slug = 'buques'), 26900, 10, false, '/fotos/buque-doce-rosa.jpg'),
-  ('buque-hortensias', 'Buquê Hortênsias', 'Hortênsias azuis e verdes, cravos brancos e mathiola rosé em papel rosa.', (select id from public.categories where slug = 'buques'), 27900, 8, true, '/fotos/buque-hortensias.jpg'),
-  ('buque-lirios', 'Buquê Lírios', 'Lírios brancos e alstroemérias em papel amarelo-claro com laço de cetim.', (select id from public.categories where slug = 'buques'), 22900, 10, false, '/fotos/buque-lirios.jpg'),
-  ('buque-jardim-bordo', 'Buquê Jardim Bordô', 'Buquê redondo com celósias, mini rosas, crisântemos brancos e limonium.', (select id from public.categories where slug = 'buques'), 29900, 6, true, '/fotos/buque-jardim-bordo.jpg'),
-  ('arranjo-sol', 'Arranjo Sol', 'Rosas amarelas, alstroemérias, crisântemos e solidago em vaso de vidro.', (select id from public.categories where slug = 'arranjos'), 21900, 8, false, '/fotos/arranjo-sol.jpg'),
-  ('arranjo-lirios', 'Arranjo Lírios e Ásters', 'Lírios rosa, ásters roxos e alstroemérias em vaso branco.', (select id from public.categories where slug = 'arranjos'), 25900, 6, false, '/fotos/arranjo-lirios.jpg'),
-  ('arranjo-bordo', 'Arranjo Bordô', 'Celósias vermelhas, boca-de-leão e folhagens em vaso branco de cerâmica.', (select id from public.categories where slug = 'arranjos'), 28900, 6, true, '/fotos/arranjo-bordo.jpg'),
-  ('arranjo-rubi', 'Arranjo Rubi', 'Rosas vermelhas, celósia verde e alstroemérias em vaso azul petróleo. Ideal para recepções.', (select id from public.categories where slug = 'arranjos'), 38900, 4, false, '/fotos/arranjo-rubi.jpg'),
-  ('arranjo-campo', 'Arranjo Campo', 'Sempre-vivas, solidago e flores do campo coloridas em vaso de vidro.', (select id from public.categories where slug = 'arranjos'), 32900, 4, false, '/fotos/arranjo-campo.jpg')
-on conflict (slug) do nothing;
+-- Os buquês (pequeno, médio, grande) e as flores são criados pela migração
+-- 20261105000000_buques_por_tamanho. Aqui só ligamos os buquês à categoria.
+update public.products set category_id = (select id from public.categories where slug = 'buques')
+ where flower_count is not null and category_id is null;
 
 insert into public.delivery_slots (label, starts_at, ends_at, fee_cents, max_orders) values
   ('Manhã (9h às 12h)', '09:00', '12:00', 2500, 10),
@@ -40,8 +31,3 @@ insert into public.categories (slug, name, description, position, seasonal, acti
   ('natal', 'Natal', 'Guirlandas, centros de mesa e arranjos para as festas.', 0, true, '2026-11-01', '2026-12-25', 'Coleção de Natal')
 on conflict (slug) do nothing;
 
-insert into public.products (slug, name, description, category_id, price_cents, stock, featured, same_day) values
-  ('guirlanda-bordo', 'Guirlanda Bordô', 'Guirlanda de pinheiro natural com rosas secas e fita de veludo vinho.', (select id from public.categories where slug = 'natal'), 32900, 10, false, false),
-  ('centro-de-mesa-natal', 'Centro de Mesa Noite Feliz', 'Arranjo baixo com rosas, pinhas e velas para a ceia.', (select id from public.categories where slug = 'natal'), 38900, 8, false, false),
-  ('box-natal', 'Flower Box Natal', 'Caixa com rosas vermelhas, eucalipto e ramos de pinheiro.', (select id from public.categories where slug = 'natal'), 27900, 12, false, true)
-on conflict (slug) do nothing;

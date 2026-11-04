@@ -1,10 +1,30 @@
 import { createPublicClient } from "./supabase/public";
 import { isSupabaseConfigured } from "./supabase/server";
 import { nowInSaoPaulo, type DeliverySlot } from "./delivery";
-import { seedCategories, seedDeliverySlots, seedPlans, seedProducts, seedWorkshops } from "./seed-data";
-import type { Category, Product, SubscriptionPlan, Workshop } from "./types";
+import { seedCategories, seedDeliverySlots, seedFlowers, seedPlans, seedProducts, seedWorkshops } from "./seed-data";
+import type { Category, Flower, Product, SubscriptionPlan, Workshop } from "./types";
 
-const PRODUCT_FIELDS = "id, slug, name, description, category_id, price_cents, image_url, stock, featured, same_day";
+const PRODUCT_FIELDS = "id, slug, name, description, category_id, price_cents, image_url, stock, featured, same_day, flower_count";
+
+// Flores à venda para montar buquês, na ordem da Isa.
+export async function getFlowers(): Promise<Flower[]> {
+  if (!isSupabaseConfigured()) return seedFlowers;
+  const { data, error } = await createPublicClient()
+    .from("flowers")
+    .select("id, slug, name, extra_price_cents, stock")
+    .eq("active", true)
+    .order("position")
+    .order("name");
+  if (error) throw error;
+  return data;
+}
+
+// Buquê montável não tem estoque próprio: vale quantos dá para montar com as flores disponíveis.
+async function withFlowerStock(products: Product[]): Promise<Product[]> {
+  if (!products.some((p) => p.flower_count)) return products;
+  const stems = (await getFlowers()).reduce((n, f) => n + Math.max(f.stock, 0), 0);
+  return products.map((p) => (p.flower_count ? { ...p, stock: Math.floor(stems / p.flower_count) } : p));
+}
 
 // Coleções sazonais só aparecem dentro da janela de datas.
 function isVisible(category: Category, today: string) {
@@ -56,40 +76,45 @@ export async function getProducts(categorySlug?: string, onlySameDay = false): P
   if (!isSupabaseConfigured()) {
     products = seedProducts;
   } else {
-    let query = createPublicClient().from("products").select(PRODUCT_FIELDS).eq("active", true).order("name");
+    let query = createPublicClient().from("products").select(PRODUCT_FIELDS).eq("active", true).order("price_cents");
     if (category) query = query.eq("category_id", category.id);
     const { data, error } = await query;
     if (error) throw error;
     products = data;
   }
 
-  return products
+  return (await withFlowerStock(products))
     .filter((p) => (category ? p.category_id === category.id : !p.category_id || !hidden.has(p.category_id)))
     .filter((p) => !onlySameDay || (p.same_day && p.stock > 0));
 }
 
 export async function getFeaturedProducts(): Promise<Product[]> {
-  if (!isSupabaseConfigured()) return seedProducts.filter((p) => p.featured);
+  if (!isSupabaseConfigured()) return withFlowerStock(seedProducts.filter((p) => p.featured));
   const { data, error } = await createPublicClient()
     .from("products")
     .select(PRODUCT_FIELDS)
     .eq("active", true)
     .eq("featured", true)
+    .order("price_cents")
     .limit(4);
   if (error) throw error;
-  return data;
+  return withFlowerStock(data);
 }
 
 export async function getProduct(slug: string): Promise<Product | null> {
-  if (!isSupabaseConfigured()) return seedProducts.find((p) => p.slug === slug) ?? null;
-  const { data, error } = await createPublicClient()
-    .from("products")
-    .select(PRODUCT_FIELDS)
-    .eq("slug", slug)
-    .eq("active", true)
-    .maybeSingle();
-  if (error) throw error;
-  return data;
+  const product = !isSupabaseConfigured()
+    ? (seedProducts.find((p) => p.slug === slug) ?? null)
+    : await createPublicClient()
+        .from("products")
+        .select(PRODUCT_FIELDS)
+        .eq("slug", slug)
+        .eq("active", true)
+        .maybeSingle()
+        .then(({ data, error }) => {
+          if (error) throw error;
+          return data;
+        });
+  return product ? (await withFlowerStock([product]))[0] : null;
 }
 
 export async function getPlans(): Promise<SubscriptionPlan[]> {

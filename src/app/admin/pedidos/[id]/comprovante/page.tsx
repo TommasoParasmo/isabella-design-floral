@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireAdmin } from "@/lib/admin";
-import { formatPrice } from "@/lib/format";
+import { flowerSummary, formatPrice } from "@/lib/format";
 import { site } from "@/lib/site";
 import { ReceiptActions } from "./receipt-actions";
 
@@ -15,14 +15,14 @@ const paymentLabel: Record<string, string> = {
   dinheiro: "Dinheiro",
 };
 
-type Item = { id: string; product_name: string; quantity: number; unit_price_cents: number };
+type Item = { id: string; product_name: string; quantity: number; unit_price_cents: number; flowers: { name: string; quantity: number }[] | null };
 
 export default async function ComprovantePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const { supabase } = await requireAdmin();
   const { data: order } = await supabase
     .from("orders")
-    .select("id, code, status, created_at, customer_name, customer_phone, customer_cpf, payment_method, delivery_fee_cents, discount_cents, total_cents, order_items(id, product_name, quantity, unit_price_cents)")
+    .select("id, code, status, created_at, customer_name, customer_phone, customer_cpf, payment_method, delivery_fee_cents, discount_cents, total_cents, order_items(id, product_name, quantity, unit_price_cents, flowers)")
     .eq("id", id)
     .maybeSingle();
   if (!order) notFound();
@@ -41,7 +41,10 @@ export default async function ComprovantePage({ params }: { params: Promise<{ id
     `*${site.name} ${site.tagline}*`,
     `Comprovante do pedido #${order.code} · ${date}`,
     "",
-    ...items.map((i) => `${i.quantity}× ${i.product_name}: ${formatPrice(i.unit_price_cents * i.quantity)}`),
+    ...items.flatMap((i) => [
+      `${i.quantity}× ${i.product_name}: ${formatPrice(i.unit_price_cents * i.quantity)}`,
+      ...(i.flowers ? [`   ${flowerSummary(i.flowers)}`] : []),
+    ]),
     ...(order.delivery_fee_cents > 0 ? [`Entrega: ${formatPrice(order.delivery_fee_cents)}`] : []),
     ...(order.discount_cents > 0 ? [`Desconto: −${formatPrice(order.discount_cents)}`] : []),
     `*Total: ${formatPrice(order.total_cents)}*`,
@@ -93,7 +96,10 @@ export default async function ComprovantePage({ params }: { params: Promise<{ id
         <ul className="space-y-1 border-t border-dashed border-rose-soft pt-3">
           {items.map((i) => (
             <li key={i.id} className="flex justify-between gap-3">
-              <span>{i.quantity}× {i.product_name}</span>
+              <span>
+                {i.quantity}× {i.product_name}
+                {i.flowers && <span className="block text-xs text-muted">{flowerSummary(i.flowers)}</span>}
+              </span>
               <span className="whitespace-nowrap">{formatPrice(i.unit_price_cents * i.quantity)}</span>
             </li>
           ))}

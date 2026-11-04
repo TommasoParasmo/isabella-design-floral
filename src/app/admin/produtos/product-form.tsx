@@ -9,6 +9,7 @@ export type ProductFormValues = {
   category_id?: string | null;
   price_cents?: number;
   low_stock_threshold?: number;
+  flower_count?: number | null;
   featured?: boolean;
   same_day?: boolean;
   active?: boolean;
@@ -59,6 +60,13 @@ export function ProductForm({ product = {}, categories }: { product?: ProductFor
         </label>
       </div>
       <label className="block text-sm">
+        Flores que o cliente escolhe
+        <input name="flower_count" type="number" min={1} max={200} placeholder="Deixe vazio para produto pronto" defaultValue={product.flower_count ?? ""} className={`${field} mt-1`} />
+        <span className="mt-1 block text-xs text-muted">
+          Com um número aqui, o produto vira buquê montável: o cliente escolhe essa quantidade de flores e o estoque baixado é o das flores.
+        </span>
+      </label>
+      <label className="block text-sm">
         Foto {product.image_url && <span className="text-muted">(envie outra para trocar)</span>}
         <input name="image" type="file" accept="image/*" className="mt-1 block text-sm" />
       </label>
@@ -68,7 +76,7 @@ export function ProductForm({ product = {}, categories }: { product?: ProductFor
         <label className="flex items-center gap-2"><input type="checkbox" name="same_day" defaultChecked={product.same_day ?? true} /> Entrega no mesmo dia</label>
       </div>
       <button className="rounded-full bg-wine px-8 py-3 text-sm text-cream hover:bg-wine-deep">Salvar produto</button>
-      {!product.id && <p className="text-xs text-muted">O estoque inicial é lançado em Estoque → Entrada.</p>}
+      {!product.id && <p className="text-xs text-muted">O estoque inicial é lançado em Estoque → Entrada (no buquê montável, é o estoque das flores).</p>}
     </form>
   );
 }

@@ -15,6 +15,7 @@ import {
   type FiscalResult,
   type Recipient,
 } from "@/lib/fiscal";
+import { flowerSummary } from "@/lib/format";
 import { onlyDigits } from "@/lib/validation";
 
 export type FiscalFormState = { error?: string; ok?: string } | null;
@@ -117,17 +118,18 @@ export async function issueOrderInvoice(orderId: string, _prev: FiscalFormState,
     const recipient = readRecipient(formData, true);
     const { data: order, error } = await supabase
       .from("orders")
-      .select("id, code, status, channel, delivery_fee_cents, discount_cents, order_items(product_id, product_name, quantity, unit_price_cents, products(ncm, cfop))")
+      .select("id, code, status, channel, delivery_fee_cents, discount_cents, order_items(product_id, product_name, quantity, unit_price_cents, flowers, products(ncm, cfop))")
       .eq("id", orderId)
       .single();
     if (error) throw error;
     if (["aguardando_pagamento", "cancelado"].includes(order.status)) return { error: "Só dá para emitir nota de pedido pago." };
 
-    type Item = { product_id: string | null; product_name: string; quantity: number; unit_price_cents: number; products: { ncm: string; cfop: string } | null };
+    type Item = { product_id: string | null; product_name: string; quantity: number; unit_price_cents: number; flowers: { name: string; quantity: number }[] | null; products: { ncm: string; cfop: string } | null };
     const payload = buildNfe({
       items: (order.order_items as unknown as Item[]).map((item) => ({
         code: item.product_id?.slice(0, 8) ?? "AVULSO",
-        description: item.product_name,
+        // xProd aceita até 120 caracteres.
+        description: (item.flowers ? `${item.product_name} (${flowerSummary(item.flowers)})` : item.product_name).slice(0, 120),
         ncm: item.products?.ncm ?? "06031900",
         cfop: item.products?.cfop ?? "5102",
         quantity: item.quantity,

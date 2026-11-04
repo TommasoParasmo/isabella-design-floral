@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useMemo, useState, useTransition } from "react";
 import { useCart } from "@/components/cart-provider";
 import { addDays, nowInSaoPaulo, slotsForDate, type DeliverySlot } from "@/lib/delivery";
-import { formatPrice } from "@/lib/format";
+import { flowerSummary, formatPrice } from "@/lib/format";
 import { placeOrder } from "./actions";
 
 const inputClass =
@@ -78,7 +78,11 @@ export function CheckoutForm({ slots, cutoffHour, pickupAddress, maxInstallments
     setError(null);
     startTransition(async () => {
       const result = await placeOrder({
-        items: items.map((i) => ({ productId: i.productId, quantity: i.quantity })),
+        items: items.map((i) => ({
+          productId: i.productId,
+          quantity: i.quantity,
+          flowers: i.flowers?.map((f) => ({ flowerId: f.flowerId, quantity: f.quantity })),
+        })),
         customer,
         fulfillment,
         scheduledDate: date,
@@ -233,8 +237,11 @@ export function CheckoutForm({ slots, cutoffHour, pickupAddress, maxInstallments
         <h2 className="font-serif text-2xl">Resumo</h2>
         <ul className="mt-4 space-y-2 text-sm">
           {items.map((i) => (
-            <li key={i.productId} className="flex justify-between gap-3">
-              <span>{i.quantity}× {i.name}</span>
+            <li key={i.key} className="flex justify-between gap-3">
+              <span>
+                {i.quantity}× {i.name}
+                {i.flowers && <span className="block text-xs text-muted">{flowerSummary(i.flowers)}</span>}
+              </span>
               <span>{formatPrice(i.priceCents * i.quantity)}</span>
             </li>
           ))}
