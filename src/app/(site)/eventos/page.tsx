@@ -187,7 +187,7 @@ export default function EventosPage() {
           <h2 className="mt-1 font-serif text-4xl sm:text-5xl">Conte sobre o seu evento</h2>
           <p className="mt-4 text-rose/85">
             Quanto antes a gente conversar, melhor: para casamentos e grandes eventos, recomendamos reservar a data com
-            pelo menos 2 meses de antecedência.
+            pelo menos 1 mês de antecedência.
           </p>
           <a
             href={whatsappLink("Olá, Isa! Vim pelo site e gostaria de um orçamento de flores para um evento.")}
