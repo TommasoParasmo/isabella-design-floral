@@ -11,6 +11,7 @@ const nav = [
   { href: "/loja?hoje=1", label: "Agende sua entrega" },
   { href: "/assinaturas", label: "Assinaturas" },
   { href: "/workshops", label: "Workshops" },
+  { href: "/eventos", label: "Eventos" },
   { href: "/#sobre", label: "Sobre" },
 ];
 
@@ -23,7 +24,7 @@ export function Header() {
       <div className="stripes-thin h-1.5" aria-hidden />
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
         <Logo />
-        <nav className="hidden items-center gap-8 md:flex" aria-label="Principal">
+        <nav className="hidden items-center gap-6 lg:flex xl:gap-8" aria-label="Principal">
           {nav.map((item) => (
             <Link
               key={item.href}
@@ -37,7 +38,7 @@ export function Header() {
           ))}
           <CartLink />
         </nav>
-        <div className="flex items-center gap-1 md:hidden">
+        <div className="flex items-center gap-1 lg:hidden">
         <CartLink />
         <button
           type="button"
@@ -53,7 +54,7 @@ export function Header() {
         </div>
       </div>
       {open && (
-        <nav className="border-t border-rose-soft px-4 pb-4 md:hidden" aria-label="Principal">
+        <nav className="border-t border-rose-soft px-4 pb-4 lg:hidden" aria-label="Principal">
           {nav.map((item) => (
             <Link
               key={item.href}
