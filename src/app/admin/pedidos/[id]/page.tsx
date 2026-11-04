@@ -111,6 +111,12 @@ export default async function PedidoAdminPage({ params }: { params: Promise<{ id
 
       <OrderStatusButtons orderId={order.id} status={order.status} fulfillment={order.fulfillment} allowCancel />
 
+      {!["aguardando_pagamento", "cancelado"].includes(order.status) && (
+        <Link href={`/admin/pedidos/${order.id}/comprovante`} className="inline-block rounded-full border border-wine px-5 py-2 text-sm text-wine hover:bg-blush">
+          Comprovante de compra
+        </Link>
+      )}
+
       <section className="space-y-4 rounded-2xl border border-rose-soft p-5">
         <div>
           <h2 className="font-serif text-2xl">Nota fiscal</h2>
