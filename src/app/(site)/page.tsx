@@ -63,7 +63,7 @@ export default async function Home() {
                 Ver a coleção
               </Link>
             </div>
-            <div className="mt-10 grid grid-cols-2 gap-x-5 gap-y-10 lg:grid-cols-4">
+            <div className="mt-10 flex flex-wrap justify-center gap-x-5 gap-y-10 *:w-[calc(50%-0.625rem)] lg:*:w-[calc(25%-0.9375rem)]">
               {collection.products.slice(0, 4).map((product) => (
                 <ProductCard key={product.id} product={product} />
               ))}
@@ -75,7 +75,7 @@ export default async function Home() {
       {/* Destaques */}
       <section className="mx-auto max-w-6xl px-4 py-20 sm:px-6">
         <SectionTitle eyebrow="os queridinhos" title="Mais pedidos" intro="Uma seleção da Isa com as flores mais bonitas da semana." />
-        <div className="mt-12 grid grid-cols-2 gap-x-5 gap-y-10 lg:grid-cols-4">
+        <div className="mt-12 flex flex-wrap justify-center gap-x-5 gap-y-10 *:w-[calc(50%-0.625rem)] lg:*:w-[calc(25%-0.9375rem)]">
           {featured.map((product) => (
             <ProductCard key={product.id} product={product} />
           ))}

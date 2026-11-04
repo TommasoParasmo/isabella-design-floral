@@ -59,7 +59,7 @@ export default async function LojaPage({ searchParams }: { searchParams: Promise
       {products.length === 0 ? (
         <p className="mt-16 text-center text-muted">Nenhum produto nesta categoria por enquanto.</p>
       ) : (
-        <div className="mt-12 grid grid-cols-2 gap-x-5 gap-y-10 lg:grid-cols-4">
+        <div className="mt-12 flex flex-wrap justify-center gap-x-5 gap-y-10 *:w-[calc(50%-0.625rem)] lg:*:w-[calc(25%-0.9375rem)]">
           {products.map((product) => (
             <ProductCard key={product.id} product={product} />
           ))}
