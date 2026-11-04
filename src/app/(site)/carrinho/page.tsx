@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useCart } from "@/components/cart-provider";
 import { FlowerArt } from "@/components/flower-art";
-import { formatPrice } from "@/lib/format";
+import { flowerSummary, formatPrice } from "@/lib/format";
 
 export default function CarrinhoPage() {
   const { items, subtotalCents, setQuantity, remove } = useCart();
@@ -23,7 +23,7 @@ export default function CarrinhoPage() {
         <>
           <ul className="mt-12 divide-y divide-rose-soft border-y border-rose-soft">
             {items.map((item) => (
-              <li key={item.productId} className="flex items-center gap-4 py-5">
+              <li key={item.key} className="flex items-center gap-4 py-5">
                 <Link href={`/produto/${item.slug}`} className="h-24 w-20 shrink-0 overflow-hidden rounded-t-[999px] rounded-b-xl bg-blush">
                   {item.imageUrl ? (
                     // eslint-disable-next-line @next/next/no-img-element
@@ -34,14 +34,15 @@ export default function CarrinhoPage() {
                 </Link>
                 <div className="min-w-0 flex-1">
                   <Link href={`/produto/${item.slug}`} className="font-serif text-xl hover:text-wine">{item.name}</Link>
+                  {item.flowers && <p className="text-xs text-muted">{flowerSummary(item.flowers)}</p>}
                   <p className="text-sm text-muted">{formatPrice(item.priceCents)}</p>
                   <div className="mt-2 flex items-center gap-3">
                     <div className="flex items-center rounded-full border border-rose-soft text-sm">
-                      <button type="button" className="px-3 py-1 text-wine" onClick={() => setQuantity(item.productId, item.quantity - 1)} aria-label="Diminuir">−</button>
+                      <button type="button" className="px-3 py-1 text-wine" onClick={() => setQuantity(item.key, item.quantity - 1)} aria-label="Diminuir">−</button>
                       <span className="w-5 text-center">{item.quantity}</span>
-                      <button type="button" className="px-3 py-1 text-wine" onClick={() => setQuantity(item.productId, item.quantity + 1)} aria-label="Aumentar">+</button>
+                      <button type="button" className="px-3 py-1 text-wine" onClick={() => setQuantity(item.key, item.quantity + 1)} aria-label="Aumentar">+</button>
                     </div>
-                    <button type="button" onClick={() => remove(item.productId)} className="text-xs text-muted underline hover:text-wine">
+                    <button type="button" onClick={() => remove(item.key)} className="text-xs text-muted underline hover:text-wine">
                       Remover
                     </button>
                   </div>

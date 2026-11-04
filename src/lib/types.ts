@@ -21,7 +21,20 @@ export type Product = {
   stock: number;
   featured: boolean;
   same_day: boolean;
+  // Buquê montável: quantas flores o cliente escolhe. Nulo = produto comum.
+  flower_count: number | null;
 };
+
+export type Flower = {
+  id: string;
+  slug: string;
+  name: string;
+  extra_price_cents: number;
+  stock: number;
+};
+
+// Flores escolhidas para uma unidade de buquê.
+export type FlowerChoice = { flowerId: string; name: string; quantity: number };
 
 export type SubscriptionPlan = {
   id: string;

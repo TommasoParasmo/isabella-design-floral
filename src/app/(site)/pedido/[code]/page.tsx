@@ -3,7 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ClearCart } from "@/components/clear-cart";
 import { formatDateLabel } from "@/lib/delivery";
-import { formatPrice } from "@/lib/format";
+import { flowerSummary, formatPrice } from "@/lib/format";
 import { whatsappLink } from "@/lib/site";
 import { createAdminClient } from "@/lib/supabase/admin";
 
@@ -40,7 +40,7 @@ export default async function PedidoPage({
   const { data: order } = await supabase
     .from("orders")
     .select(
-      "code, status, fulfillment, scheduled_date, mp_preference_id, subtotal_cents, delivery_fee_cents, total_cents, delivery_slots(label), order_items(product_name, quantity, unit_price_cents)",
+      "code, status, fulfillment, scheduled_date, mp_preference_id, subtotal_cents, delivery_fee_cents, total_cents, delivery_slots(label), order_items(product_name, quantity, unit_price_cents, flowers)",
     )
     .eq("code", code)
     .maybeSingle();
@@ -83,9 +83,12 @@ export default async function PedidoPage({
           </p>
         )}
         <ul className="mt-4 space-y-1 border-t border-rose-soft pt-4">
-          {order.order_items.map((item) => (
-            <li key={item.product_name} className="flex justify-between">
-              <span>{item.quantity}× {item.product_name}</span>
+          {order.order_items.map((item, n) => (
+            <li key={n} className="flex justify-between gap-3">
+              <span>
+                {item.quantity}× {item.product_name}
+                {item.flowers && <span className="block text-xs text-muted">{flowerSummary(item.flowers)}</span>}
+              </span>
               <span>{formatPrice(item.unit_price_cents * item.quantity)}</span>
             </li>
           ))}

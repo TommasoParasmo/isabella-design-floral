@@ -1,11 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useTransition } from "react";
-import { formatPrice } from "@/lib/format";
+import { useMemo, useState, useTransition } from "react";
+import { FlowerPicker, selectedCount, selectionExtraCents, selectionToChoices, type FlowerSelection } from "@/components/flower-picker";
+import { flowerSummary, formatPrice } from "@/lib/format";
+import type { Flower, FlowerChoice } from "@/lib/types";
 import { registerCounterSale } from "../actions";
 
-type Product = { id: string; name: string; price_cents: number; stock: number };
+type Product = { id: string; name: string; price_cents: number; stock: number; flower_count: number | null };
+type Line = { key: string; productId: string; name: string; unitPrice: number; quantity: number; flowers?: FlowerChoice[] };
 const methods = [
   { id: "pix", label: "Pix" },
   { id: "cartao_credito", label: "Crédito" },
@@ -13,39 +16,69 @@ const methods = [
   { id: "dinheiro", label: "Dinheiro" },
 ] as const;
 
-export function CounterSale({ products }: { products: Product[] }) {
-  const [cart, setCart] = useState<Record<string, number>>({});
+export function CounterSale({ products, flowers }: { products: Product[]; flowers: Flower[] }) {
+  const [lines, setLines] = useState<Line[]>([]);
+  const [building, setBuilding] = useState<string | null>(null);
+  const [selection, setSelection] = useState<FlowerSelection>({});
   const [method, setMethod] = useState<(typeof methods)[number]["id"]>("pix");
   const [cpf, setCpf] = useState("");
   const [discount, setDiscount] = useState("");
   const [message, setMessage] = useState<{ ok: boolean; text: string; orderId?: string } | null>(null);
   const [pending, startTransition] = useTransition();
 
-  const lines = products.filter((p) => cart[p.id]);
-  const subtotal = lines.reduce((n, p) => n + p.price_cents * cart[p.id], 0);
+  const subtotal = lines.reduce((n, l) => n + l.unitPrice * l.quantity, 0);
   const discountCents = Math.round(Number(discount.replace(",", ".") || 0) * 100);
   const total = Math.max(subtotal - discountCents, 0);
 
-  function change(id: string, delta: number, max: number) {
-    setCart((c) => {
-      const q = Math.min(Math.max((c[id] ?? 0) + delta, 0), max);
-      const next = { ...c, [id]: q };
-      if (q === 0) delete next[id];
-      return next;
+  // Flores já usadas nos buquês desta venda saem do saldo mostrado.
+  const flowersLeft = useMemo(() => {
+    const used = new Map<string, number>();
+    for (const l of lines) for (const f of l.flowers ?? []) used.set(f.flowerId, (used.get(f.flowerId) ?? 0) + f.quantity * l.quantity);
+    return flowers.map((f) => ({ ...f, stock: f.stock - (used.get(f.id) ?? 0) }));
+  }, [flowers, lines]);
+
+  const qty = (productId: string) => lines.find((l) => l.key === productId)?.quantity ?? 0;
+
+  function changeProduct(p: Product, delta: number) {
+    setLines((current) => {
+      const q = Math.min(Math.max(qty(p.id) + delta, 0), p.stock);
+      const rest = current.filter((l) => l.key !== p.id);
+      return q === 0 ? rest : [...rest, { key: p.id, productId: p.id, name: p.name, unitPrice: p.price_cents, quantity: q }];
     });
+  }
+
+  function addBouquet(p: Product) {
+    const choices = selectionToChoices(flowersLeft, selection);
+    setLines((current) => [
+      ...current,
+      {
+        key: `${p.id}-${Date.now()}`,
+        productId: p.id,
+        name: p.name,
+        unitPrice: p.price_cents + selectionExtraCents(flowersLeft, selection),
+        quantity: 1,
+        flowers: choices,
+      },
+    ]);
+    setBuilding(null);
+    setSelection({});
   }
 
   function finish() {
     setMessage(null);
     startTransition(async () => {
       const result = await registerCounterSale({
-        items: lines.map((p) => ({ productId: p.id, quantity: cart[p.id] })),
+        items: lines.map((l) => ({
+          productId: l.productId,
+          quantity: l.quantity,
+          flowers: l.flowers?.map((f) => ({ flowerId: f.flowerId, quantity: f.quantity })),
+        })),
         paymentMethod: method,
         customerCpf: cpf,
         discountCents,
       });
       if (result.ok) {
-        setCart({});
+        setLines([]);
         setCpf("");
         setDiscount("");
         setMessage({ ok: true, text: `Venda registrada: ${formatPrice(total)}.`, orderId: result.orderId });
@@ -57,27 +90,70 @@ export function CounterSale({ products }: { products: Product[] }) {
 
   return (
     <div className="mt-6 grid gap-8 lg:grid-cols-[1fr_340px]">
-      <ul className="grid gap-3 sm:grid-cols-2">
-        {products.map((p) => (
-          <li key={p.id} className="flex items-center justify-between gap-3 rounded-2xl border border-rose-soft p-4">
-            <div className="text-sm">
-              <p className="font-medium">{p.name}</p>
-              <p className="text-muted">{formatPrice(p.price_cents)} · {p.stock} un.</p>
-            </div>
-            <div className="flex items-center rounded-full border border-rose-soft text-sm">
-              <button type="button" className="px-3 py-1.5 text-wine" onClick={() => change(p.id, -1, p.stock)} aria-label={`Remover ${p.name}`}>−</button>
-              <span className="w-5 text-center">{cart[p.id] ?? 0}</span>
-              <button type="button" className="px-3 py-1.5 text-wine disabled:opacity-30" disabled={p.stock <= (cart[p.id] ?? 0)} onClick={() => change(p.id, 1, p.stock)} aria-label={`Adicionar ${p.name}`}>+</button>
-            </div>
-          </li>
-        ))}
+      <ul className="grid h-fit gap-3 sm:grid-cols-2">
+        {products.map((p) =>
+          p.flower_count ? (
+            <li key={p.id} className={`rounded-2xl border p-4 ${building === p.id ? "border-wine sm:col-span-2" : "border-rose-soft"}`}>
+              <div className="flex items-center justify-between gap-3">
+                <div className="text-sm">
+                  <p className="font-medium">{p.name}</p>
+                  <p className="text-muted">{formatPrice(p.price_cents)} · {p.flower_count} flores</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setBuilding(building === p.id ? null : p.id);
+                    setSelection({});
+                  }}
+                  className="rounded-full border border-wine px-4 py-1.5 text-sm text-wine hover:bg-blush"
+                >
+                  {building === p.id ? "Fechar" : "Montar"}
+                </button>
+              </div>
+              {building === p.id && (
+                <div className="mt-4">
+                  <FlowerPicker flowers={flowersLeft} total={p.flower_count} value={selection} onChange={setSelection} compact />
+                  <button
+                    type="button"
+                    disabled={selectedCount(selection) !== p.flower_count}
+                    onClick={() => addBouquet(p)}
+                    className="mt-4 w-full rounded-full bg-wine py-2.5 text-sm text-cream hover:bg-wine-deep disabled:opacity-50"
+                  >
+                    Adicionar {p.name} · {formatPrice(p.price_cents + selectionExtraCents(flowersLeft, selection))}
+                  </button>
+                </div>
+              )}
+            </li>
+          ) : (
+            <li key={p.id} className="flex items-center justify-between gap-3 rounded-2xl border border-rose-soft p-4">
+              <div className="text-sm">
+                <p className="font-medium">{p.name}</p>
+                <p className="text-muted">{formatPrice(p.price_cents)} · {p.stock} un.</p>
+              </div>
+              <div className="flex items-center rounded-full border border-rose-soft text-sm">
+                <button type="button" className="px-3 py-1.5 text-wine" onClick={() => changeProduct(p, -1)} aria-label={`Remover ${p.name}`}>−</button>
+                <span className="w-5 text-center">{qty(p.id)}</span>
+                <button type="button" className="px-3 py-1.5 text-wine disabled:opacity-30" disabled={p.stock <= qty(p.id)} onClick={() => changeProduct(p, 1)} aria-label={`Adicionar ${p.name}`}>+</button>
+              </div>
+            </li>
+          ),
+        )}
       </ul>
 
       <aside className="h-fit space-y-4 rounded-2xl border border-rose-soft bg-blush/50 p-5 lg:sticky lg:top-6">
         <ul className="space-y-1 text-sm">
           {lines.length === 0 && <li className="text-muted">Nenhum item.</li>}
-          {lines.map((p) => (
-            <li key={p.id} className="flex justify-between"><span>{cart[p.id]}× {p.name}</span><span>{formatPrice(p.price_cents * cart[p.id])}</span></li>
+          {lines.map((l) => (
+            <li key={l.key} className="flex justify-between gap-2">
+              <span>
+                {l.quantity}× {l.name}
+                {l.flowers && <span className="block text-xs text-muted">{flowerSummary(l.flowers)}</span>}
+              </span>
+              <span className="flex items-start gap-2">
+                {formatPrice(l.unitPrice * l.quantity)}
+                <button type="button" onClick={() => setLines((c) => c.filter((x) => x.key !== l.key))} className="text-muted hover:text-wine" aria-label={`Tirar ${l.name}`}>×</button>
+              </span>
+            </li>
           ))}
         </ul>
         <div className="grid grid-cols-4 gap-1">

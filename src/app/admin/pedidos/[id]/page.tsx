@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { orderStatusLabel, requireAdmin } from "@/lib/admin";
 import { formatDateLabel } from "@/lib/delivery";
-import { formatPrice } from "@/lib/format";
+import { flowerSummary, formatPrice } from "@/lib/format";
 import { OrderStatusButtons } from "../../order-status-buttons";
 import { issueOrderInvoice } from "../../notas/actions";
 import { DocumentList, type FiscalDocumentRow } from "../../notas/document-list";
@@ -13,7 +13,7 @@ export default async function PedidoAdminPage({ params }: { params: Promise<{ id
   const { supabase } = await requireAdmin();
   const { data: order } = await supabase
     .from("orders")
-    .select("*, delivery_slots(label), order_items(id, product_name, quantity, unit_price_cents)")
+    .select("*, delivery_slots(label), order_items(id, product_name, quantity, unit_price_cents, flowers)")
     .eq("id", id)
     .maybeSingle();
   if (!order) notFound();
@@ -92,9 +92,12 @@ export default async function PedidoAdminPage({ params }: { params: Promise<{ id
       </dl>
 
       <ul className="rounded-2xl border border-rose-soft p-5 text-sm">
-        {order.order_items.map((item: { id: string; product_name: string; quantity: number; unit_price_cents: number }) => (
-          <li key={item.id} className="flex justify-between py-1">
-            <span>{item.quantity}× {item.product_name}</span>
+        {order.order_items.map((item: { id: string; product_name: string; quantity: number; unit_price_cents: number; flowers: { name: string; quantity: number }[] | null }) => (
+          <li key={item.id} className="flex justify-between gap-3 py-1">
+            <span>
+              {item.quantity}× {item.product_name}
+              {item.flowers && <span className="block text-xs text-muted">{flowerSummary(item.flowers)}</span>}
+            </span>
             <span>{formatPrice(item.unit_price_cents * item.quantity)}</span>
           </li>
         ))}

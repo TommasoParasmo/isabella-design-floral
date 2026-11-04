@@ -1,7 +1,7 @@
 // Espelho de supabase/seed.sql. Usado enquanto o Supabase não está configurado,
 // para que o site funcione em desenvolvimento e em prévias.
 import type { DeliverySlot } from "./delivery";
-import type { Category, Product, SubscriptionPlan, Workshop } from "./types";
+import type { Category, Flower, Product, SubscriptionPlan, Workshop } from "./types";
 
 export const seedCategories: Category[] = [
   { id: "c1", slug: "buques", name: "Buquês", description: "Buquês assinados, montados à mão no dia da entrega.", position: 1 },
@@ -9,33 +9,33 @@ export const seedCategories: Category[] = [
   { id: "c0", slug: "natal", name: "Natal", description: "Guirlandas, centros de mesa e arranjos para as festas.", position: 0, seasonal: true, active_from: "2026-11-01", active_until: "2026-12-25", headline: "Coleção de Natal" },
 ];
 
-const p = (
-  id: string,
-  slug: string,
-  name: string,
-  description: string,
-  category_id: string,
-  price_cents: number,
-  stock: number,
-  featured = false,
-  same_day = true,
-  image_url: string | null = `/fotos/${slug}.jpg`,
-): Product => ({ id, slug, name, description, category_id, price_cents, stock, featured, same_day, image_url });
+const bouquet = (id: string, slug: string, name: string, flower_count: number, price_cents: number, image: string): Product => ({
+  id,
+  slug,
+  name,
+  description: `Buquê com ${flower_count} flores que você escolhe, montado à mão pela Isa com papel e laço de cetim.`,
+  category_id: "c1",
+  price_cents,
+  stock: 0,
+  featured: true,
+  same_day: true,
+  image_url: `/fotos/${image}.jpg`,
+  flower_count,
+});
 
 export const seedProducts: Product[] = [
-  p("p1", "buque-rose", "Buquê Rosé", "Cravos e mini rosas em tons de rosa, em papel perolado com listras douradas e laço de cetim.", "c1", 24900, 10, true),
-  p("p2", "buque-doce-rosa", "Buquê Doce Rosa", "Cravos mesclados e mini rosas salmão, com papel perolado e fita rosa listrada.", "c1", 26900, 10),
-  p("p3", "buque-hortensias", "Buquê Hortênsias", "Hortênsias azuis e verdes, cravos brancos e mathiola rosé em papel rosa.", "c1", 27900, 8, true),
-  p("p4", "buque-lirios", "Buquê Lírios", "Lírios brancos e alstroemérias em papel amarelo-claro com laço de cetim.", "c1", 22900, 10),
-  p("p5", "buque-jardim-bordo", "Buquê Jardim Bordô", "Buquê redondo com celósias, mini rosas, crisântemos brancos e limonium.", "c1", 29900, 6, true),
-  p("p6", "arranjo-sol", "Arranjo Sol", "Rosas amarelas, alstroemérias, crisântemos e solidago em vaso de vidro.", "c2", 21900, 8),
-  p("p7", "arranjo-lirios", "Arranjo Lírios e Ásters", "Lírios rosa, ásters roxos e alstroemérias em vaso branco.", "c2", 25900, 6),
-  p("p8", "arranjo-bordo", "Arranjo Bordô", "Celósias vermelhas, boca-de-leão e folhagens em vaso branco de cerâmica.", "c2", 28900, 6, true),
-  p("p9", "arranjo-rubi", "Arranjo Rubi", "Rosas vermelhas, celósia verde e alstroemérias em vaso azul petróleo. Ideal para recepções.", "c2", 38900, 4),
-  p("p10", "arranjo-campo", "Arranjo Campo", "Sempre-vivas, solidago e flores do campo coloridas em vaso de vidro.", "c2", 32900, 4),
-  p("p20", "guirlanda-bordo", "Guirlanda Bordô", "Guirlanda de pinheiro natural com rosas secas e fita de veludo vinho.", "c0", 32900, 10, false, false, null),
-  p("p21", "centro-de-mesa-natal", "Centro de Mesa Noite Feliz", "Arranjo baixo com rosas, pinhas e velas para a ceia.", "c0", 38900, 8, false, false, null),
-  p("p22", "box-natal", "Flower Box Natal", "Caixa com rosas vermelhas, eucalipto e ramos de pinheiro.", "c0", 27900, 12, false, true, null),
+  bouquet("p1", "buque-pequeno", "Buquê Pequeno", 10, 14900, "buque-doce-rosa"),
+  bouquet("p2", "buque-medio", "Buquê Médio", 20, 24900, "buque-rose"),
+  bouquet("p3", "buque-grande", "Buquê Grande", 30, 34900, "buque-jardim-bordo"),
+];
+
+export const seedFlowers: Flower[] = [
+  { id: "f1", slug: "rosa", name: "Rosa", extra_price_cents: 0, stock: 60 },
+  { id: "f2", slug: "margarida", name: "Margarida", extra_price_cents: 0, stock: 40 },
+  { id: "f3", slug: "orquidea", name: "Orquídea", extra_price_cents: 0, stock: 12 },
+  { id: "f4", slug: "lirio", name: "Lírio", extra_price_cents: 0, stock: 20 },
+  { id: "f5", slug: "girassol", name: "Girassol", extra_price_cents: 0, stock: 0 },
+  { id: "f6", slug: "cravo", name: "Cravo", extra_price_cents: 0, stock: 30 },
 ];
 
 export const seedPlans: SubscriptionPlan[] = [

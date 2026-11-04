@@ -12,7 +12,16 @@ const onlyDigits = (v: string) => v.replace(/\D/g, "");
 const checkoutSchema = z
   .object({
     items: z
-      .array(z.object({ productId: z.string().uuid(), quantity: z.number().int().min(1).max(50) }))
+      .array(
+        z.object({
+          productId: z.string().uuid(),
+          quantity: z.number().int().min(1).max(50),
+          flowers: z
+            .array(z.object({ flowerId: z.string().uuid(), quantity: z.number().int().min(1).max(200) }))
+            .max(30)
+            .optional(),
+        }),
+      )
       .min(1, "Seu carrinho está vazio."),
     customer: z.object({
       name: z.string().trim().min(3, "Informe seu nome completo."),
@@ -58,20 +67,72 @@ export async function placeOrder(input: CheckoutInput): Promise<CheckoutResult> 
 
   // Preços e estoque sempre vêm do banco, nunca do navegador.
   const ids = data.items.map((i) => i.productId);
-  const { data: products, error: productsError } = await supabase
-    .from("products")
-    .select("id, name, price_cents, stock, same_day, active")
-    .in("id", ids);
+  const flowerIds = data.items.flatMap((i) => i.flowers?.map((f) => f.flowerId) ?? []);
+  const [{ data: products, error: productsError }, { data: flowers, error: flowersError }] = await Promise.all([
+    supabase.from("products").select("id, name, price_cents, stock, same_day, active, flower_count").in("id", ids),
+    flowerIds.length
+      ? supabase.from("flowers").select("id, name, stock, active, extra_price_cents, position").in("id", flowerIds)
+      : Promise.resolve({ data: [], error: null }),
+  ]);
   if (productsError) throw productsError;
+  if (flowersError) throw flowersError;
 
-  const lines = [];
+  type Line = {
+    product: (typeof products)[number];
+    quantity: number;
+    unitPrice: number;
+    flowers: { flower_id: string; name: string; quantity: number }[] | null;
+  };
+  const lines: Line[] = [];
+  const productUse = new Map<string, number>();
+  const flowerUse = new Map<string, number>();
   for (const item of data.items) {
     const product = products.find((p) => p.id === item.productId);
     if (!product || !product.active) return { ok: false, error: "Um dos produtos não está mais disponível." };
-    if (product.stock < item.quantity) {
-      return { ok: false, error: `Temos só ${product.stock} unidade(s) de ${product.name} no momento.` };
+
+    if (!product.flower_count) {
+      productUse.set(product.id, (productUse.get(product.id) ?? 0) + item.quantity);
+      if (product.stock < productUse.get(product.id)!) {
+        return { ok: false, error: `Temos só ${product.stock} unidade(s) de ${product.name} no momento.` };
+      }
+      lines.push({ product, quantity: item.quantity, unitPrice: product.price_cents, flowers: null });
+      continue;
     }
-    lines.push({ product, quantity: item.quantity });
+
+    // Buquê montável: as flores escolhidas precisam fechar a quantidade do tamanho.
+    const chosen = [];
+    let extra = 0;
+    for (const choice of item.flowers ?? []) {
+      const flower = flowers.find((f) => f.id === choice.flowerId);
+      if (!flower || !flower.active) return { ok: false, error: "Uma das flores escolhidas não está mais disponível." };
+      chosen.push({ flower, quantity: choice.quantity });
+      extra += flower.extra_price_cents * choice.quantity;
+      flowerUse.set(flower.id, (flowerUse.get(flower.id) ?? 0) + choice.quantity * item.quantity);
+    }
+    const count = chosen.reduce((n, c) => n + c.quantity, 0);
+    if (count !== product.flower_count) {
+      return { ok: false, error: `O ${product.name} leva ${product.flower_count} flores. Monte o buquê de novo na página dele.` };
+    }
+    chosen.sort((a, b) => a.flower.position - b.flower.position || a.flower.name.localeCompare(b.flower.name));
+    lines.push({
+      product,
+      quantity: item.quantity,
+      unitPrice: product.price_cents + extra,
+      flowers: chosen.map((c) => ({ flower_id: c.flower.id, name: c.flower.name, quantity: c.quantity })),
+    });
+  }
+
+  for (const [flowerId, used] of flowerUse) {
+    const flower = flowers.find((f) => f.id === flowerId)!;
+    if (flower.stock < used) {
+      return {
+        ok: false,
+        error:
+          flower.stock > 0
+            ? `Temos só ${flower.stock} ${flower.name.toLowerCase()}(s) no momento. Troque algumas flores do buquê.`
+            : `${flower.name} acabou. Troque por outra flor no buquê.`,
+      };
+    }
   }
 
   const allSameDay = lines.every((l) => l.product.same_day);
@@ -98,7 +159,7 @@ export async function placeOrder(input: CheckoutInput): Promise<CheckoutResult> 
     return { ok: false, error: "Esse período já está lotado. Escolha outro horário ou outro dia." };
   }
 
-  const subtotal = lines.reduce((n, l) => n + l.product.price_cents * l.quantity, 0);
+  const subtotal = lines.reduce((n, l) => n + l.unitPrice * l.quantity, 0);
   const deliveryFee = data.fulfillment === "entrega" ? slot.fee_cents : 0;
 
   const { data: order, error: orderError } = await supabase
@@ -128,8 +189,9 @@ export async function placeOrder(input: CheckoutInput): Promise<CheckoutResult> 
       order_id: order.id,
       product_id: l.product.id,
       product_name: l.product.name,
-      unit_price_cents: l.product.price_cents,
+      unit_price_cents: l.unitPrice,
       quantity: l.quantity,
+      flowers: l.flowers,
     })),
   );
   if (itemsError) throw itemsError;
@@ -138,7 +200,7 @@ export async function placeOrder(input: CheckoutInput): Promise<CheckoutResult> 
     id: l.product.id,
     title: l.product.name,
     quantity: l.quantity,
-    unit_price_cents: l.product.price_cents,
+    unit_price_cents: l.unitPrice,
   }));
   if (deliveryFee > 0) {
     preferenceItems.push({ id: "entrega", title: `Entrega · ${slot.label}`, quantity: 1, unit_price_cents: deliveryFee });

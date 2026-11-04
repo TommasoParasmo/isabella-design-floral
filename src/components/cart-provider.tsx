@@ -1,25 +1,35 @@
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import type { FlowerChoice } from "@/lib/types";
 
 export type CartItem = {
+  // Identifica a linha: o mesmo buquê com flores diferentes vira outra linha.
+  key: string;
   productId: string;
   slug: string;
   name: string;
   priceCents: number;
   imageUrl: string | null;
   sameDay: boolean;
+  flowers?: FlowerChoice[];
   quantity: number;
 };
+
+export function cartKey(productId: string, flowers?: FlowerChoice[]) {
+  if (!flowers?.length) return productId;
+  const combo = [...flowers].sort((a, b) => a.flowerId.localeCompare(b.flowerId)).map((f) => `${f.flowerId}:${f.quantity}`);
+  return `${productId}|${combo.join(",")}`;
+}
 
 type CartContextValue = {
   items: CartItem[];
   count: number;
   subtotalCents: number;
   allSameDay: boolean;
-  add: (item: Omit<CartItem, "quantity">, quantity?: number) => void;
-  setQuantity: (productId: string, quantity: number) => void;
-  remove: (productId: string) => void;
+  add: (item: Omit<CartItem, "quantity" | "key">, quantity?: number) => void;
+  setQuantity: (key: string, quantity: number) => void;
+  remove: (key: string) => void;
   clear: () => void;
 };
 
@@ -33,7 +43,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) setItems(JSON.parse(saved));
+      // Carrinhos antigos não tinham "key".
+      if (saved) setItems((JSON.parse(saved) as CartItem[]).map((i) => ({ ...i, key: i.key ?? i.productId })));
     } catch {
       // armazenamento indisponível: carrinho fica só na memória
     }
@@ -49,26 +60,25 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     }
   }, [items, loaded]);
 
-  const add = useCallback((item: Omit<CartItem, "quantity">, quantity = 1) => {
+  const add = useCallback((item: Omit<CartItem, "quantity" | "key">, quantity = 1) => {
+    const key = cartKey(item.productId, item.flowers);
     setItems((current) => {
-      const existing = current.find((i) => i.productId === item.productId);
+      const existing = current.find((i) => i.key === key);
       if (existing) {
-        return current.map((i) => (i.productId === item.productId ? { ...i, quantity: i.quantity + quantity } : i));
+        return current.map((i) => (i.key === key ? { ...i, quantity: i.quantity + quantity } : i));
       }
-      return [...current, { ...item, quantity }];
+      return [...current, { ...item, key, quantity }];
     });
   }, []);
 
-  const setQuantity = useCallback((productId: string, quantity: number) => {
+  const setQuantity = useCallback((key: string, quantity: number) => {
     setItems((current) =>
-      quantity <= 0
-        ? current.filter((i) => i.productId !== productId)
-        : current.map((i) => (i.productId === productId ? { ...i, quantity } : i)),
+      quantity <= 0 ? current.filter((i) => i.key !== key) : current.map((i) => (i.key === key ? { ...i, quantity } : i)),
     );
   }, []);
 
-  const remove = useCallback((productId: string) => {
-    setItems((current) => current.filter((i) => i.productId !== productId));
+  const remove = useCallback((key: string) => {
+    setItems((current) => current.filter((i) => i.key !== key));
   }, []);
 
   const clear = useCallback(() => setItems([]), []);

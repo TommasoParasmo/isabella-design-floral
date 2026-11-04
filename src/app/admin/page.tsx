@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { orderStatusLabel, requireAdmin } from "@/lib/admin";
 import { addDays, formatDateLabel, nowInSaoPaulo } from "@/lib/delivery";
-import { formatPrice } from "@/lib/format";
+import { flowerSummary, formatPrice } from "@/lib/format";
 import { OrderStatusButtons } from "./order-status-buttons";
 
 type Search = { data?: string };
@@ -16,7 +16,7 @@ export default async function AgendaPage({ searchParams }: { searchParams: Promi
     supabase
       .from("orders")
       .select(
-        "id, code, status, stock_issue, fulfillment, customer_name, customer_phone, recipient_name, total_cents, delivery_address, delivery_slots(label, starts_at), order_items(product_name, quantity)",
+        "id, code, status, stock_issue, fulfillment, customer_name, customer_phone, recipient_name, total_cents, delivery_address, delivery_slots(label, starts_at), order_items(product_name, quantity, flowers)",
       )
       .eq("scheduled_date", date)
       .not("status", "in", "(cancelado,aguardando_pagamento)")
@@ -80,7 +80,14 @@ export default async function AgendaPage({ searchParams }: { searchParams: Promi
                     <Link href={`/admin/pedidos/${order.id}`} className="font-serif text-2xl hover:text-wine">
                       {order.recipient_name || order.customer_name}
                     </Link>
-                    <p className="text-sm">{order.order_items.map((i) => `${i.quantity}× ${i.product_name}`).join(", ")}</p>
+                    <ul className="text-sm">
+                      {order.order_items.map((i, n) => (
+                        <li key={n}>
+                          {i.quantity}× {i.product_name}
+                          {i.flowers && <span className="text-muted"> · {flowerSummary(i.flowers)}</span>}
+                        </li>
+                      ))}
+                    </ul>
                     {address && (
                       <p className="mt-1 text-xs text-muted">
                         {address.street}, {address.number}
