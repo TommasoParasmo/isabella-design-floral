@@ -60,7 +60,13 @@ export default async function ComprovantePage({ params }: { params: Promise<{ id
       </div>
       {!unpaid && <ReceiptActions whatsappUrl={whatsappUrl} />}
 
-      <article className="space-y-4 rounded-2xl border border-rose-soft bg-white p-6 text-sm print:rounded-none print:border-0 print:p-0">
+      {/* Térmica Epson TM-T20X, bobina de 80 mm: área útil de 72 mm, só preto. */}
+      <style>{`@media print {
+        @page { margin: 0; }
+        .receipt { width: 72mm; margin: 0 auto; padding: 3mm 0 8mm; font-size: 12px; }
+        .receipt, .receipt * { color: #000 !important; border-color: #000 !important; background: transparent !important; }
+      }`}</style>
+      <article className="receipt space-y-4 rounded-2xl border border-rose-soft bg-white p-6 text-sm print:rounded-none print:border-0 print:p-0">
         <header className="text-center">
           <p className="font-script text-4xl text-wine">{site.name}</p>
           <p className="text-xs tracking-widest text-muted uppercase">{site.tagline} · {site.city}</p>
