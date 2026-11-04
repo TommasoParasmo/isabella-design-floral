@@ -8,7 +8,7 @@ import { Logo } from "./logo";
 
 const nav = [
   { href: "/loja", label: "Loja" },
-  { href: "/loja?hoje=1", label: "Entrega hoje" },
+  { href: "/loja?hoje=1", label: "Agende sua entrega" },
   { href: "/assinaturas", label: "Assinaturas" },
   { href: "/workshops", label: "Workshops" },
   { href: "/#sobre", label: "Sobre" },
