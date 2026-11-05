@@ -45,6 +45,9 @@ export type SubscriptionPlan = {
   price_cents: number;
   image_url: string | null;
   perks: string[];
+  // buque: sem vaso. arranjo: com vaso. Nulo nos planos antigos.
+  kind: "buque" | "arranjo" | null;
+  size: "pequeno" | "medio" | "grande" | null;
 };
 
 export type Workshop = {

@@ -23,7 +23,8 @@ export function Footer() {
         <div className="text-sm">
           <h2 className="font-serif text-xl text-cream">Fale com a Isa</h2>
           <ul className="mt-3 space-y-2 text-rose/85">
-            <li><a href={whatsappLink()} target="_blank" rel="noreferrer" className="hover:text-cream">WhatsApp</a></li>
+            <li><a href={whatsappLink()} target="_blank" rel="noreferrer" className="hover:text-cream">WhatsApp {site.phone}</a></li>
+            <li><a href={`mailto:${site.email}`} className="break-all hover:text-cream">{site.email}</a></li>
             <li>
               <a href={`https://instagram.com/${site.instagram}`} target="_blank" rel="noreferrer" className="hover:text-cream">
                 @{site.instagram}
