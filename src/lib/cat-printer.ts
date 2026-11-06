@@ -107,7 +107,7 @@ export function canvasToRows(canvas: HTMLCanvasElement, threshold = 160) {
 // Conexão (fica guardada enquanto a aba do painel estiver aberta)
 // ---------------------------------------------------------------------------
 
-type Connection = { device: Device; tx: Characteristic; paused: boolean };
+type Connection = { device: Device; tx: Characteristic; paused: boolean; closed: boolean };
 let current: Connection | null = null;
 
 async function open(device: Device): Promise<Connection> {
@@ -120,7 +120,7 @@ async function open(device: Device): Promise<Connection> {
     rx ??= chars.find((c) => c.uuid === RX);
   }
   if (!tx) throw new Error("Essa impressora não foi reconhecida. Confira se é a mini impressora (PD01).");
-  const conn: Connection = { device, tx, paused: false };
+  const conn: Connection = { device, tx, paused: false, closed: false };
   if (rx) {
     await rx.startNotifications().catch(() => undefined);
     rx.addEventListener("characteristicvaluechanged", () => {
@@ -129,7 +129,8 @@ async function open(device: Device): Promise<Connection> {
     });
   }
   device.addEventListener("gattserverdisconnected", () => {
-    if (current?.device === device) current = null;
+    conn.closed = true;
+    if (current === conn) current = null;
   });
   return conn;
 }
@@ -174,7 +175,8 @@ const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
 async function send(conn: Connection, bytes: Uint8Array) {
   let size = 180;
   for (let i = 0; i < bytes.length; ) {
-    while (conn.paused) await wait(100);
+    while (conn.paused && !conn.closed) await wait(100);
+    if (conn.closed) throw new Error("A impressora desconectou no meio da impressão. Confira se ela está ligada e tente de novo.");
     const chunk = bytes.slice(i, i + size);
     try {
       if (conn.tx.writeValueWithoutResponse) await conn.tx.writeValueWithoutResponse(chunk);
