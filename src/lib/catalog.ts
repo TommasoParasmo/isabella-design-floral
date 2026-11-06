@@ -121,7 +121,7 @@ export async function getPlans(): Promise<SubscriptionPlan[]> {
   if (!isSupabaseConfigured()) return seedPlans;
   const { data, error } = await createPublicClient()
     .from("subscription_plans")
-    .select("id, slug, name, description, frequency, price_cents, image_url, perks")
+    .select("id, slug, name, description, frequency, price_cents, image_url, perks, kind, size")
     .eq("active", true)
     .order("position");
   if (error) throw error;

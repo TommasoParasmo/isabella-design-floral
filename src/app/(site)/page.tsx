@@ -3,7 +3,8 @@ import { FlowerArt } from "@/components/flower-art";
 import { ProductCard } from "@/components/product-card";
 import { SectionTitle } from "@/components/section-title";
 import { getActiveCollection, getCategories, getFeaturedProducts, getPlans, getUpcomingWorkshops } from "@/lib/catalog";
-import { formatDateTime, formatPrice, frequencyLabel } from "@/lib/format";
+import { formatDateTime, formatPrice } from "@/lib/format";
+import { cheapestPlan, planKinds } from "@/lib/plans";
 import { whatsappLink } from "@/lib/site";
 
 export const revalidate = 60;
@@ -127,20 +128,32 @@ export default async function Home() {
       <section className="bg-wine-deep py-20 text-cream">
         <div className="mx-auto max-w-6xl px-4 sm:px-6">
           <div className="mx-auto max-w-2xl text-center">
-            <p className="font-script text-3xl text-rose">flores toda semana</p>
+            <p className="font-script text-3xl text-rose">flores frescas da estação</p>
             <h2 className="mt-1 font-serif text-4xl sm:text-5xl">Assinaturas florais</h2>
           </div>
-          <div className="mt-12 grid gap-6 md:grid-cols-3">
-            {plans.map((plan) => (
-              <div key={plan.id} className="rounded-3xl border border-rose/25 bg-wine p-8">
-                <h3 className="font-serif text-3xl">{plan.name}</h3>
-                <p className="mt-2 text-sm text-rose/85">{plan.description}</p>
-                <p className="mt-6 font-serif text-4xl text-rose">
-                  {formatPrice(plan.price_cents)}
-                  <span className="ml-1 font-sans text-xs text-rose/70">{frequencyLabel[plan.frequency]}</span>
-                </p>
-              </div>
-            ))}
+          <div className="mx-auto mt-12 grid max-w-4xl gap-6 md:grid-cols-2">
+            {planKinds.map(({ kind, title, vase, image, imageAlt }) => {
+              const from = cheapestPlan(plans, kind);
+              return (
+                <Link key={kind} href={`/assinaturas#${kind}`} className="group flex gap-5 rounded-3xl border border-rose/25 bg-wine p-5 transition-colors hover:border-rose">
+                  <div className="h-32 w-26 shrink-0 overflow-hidden rounded-t-[999px] rounded-b-xl">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={image} alt={imageAlt} className="h-full w-full object-cover" />
+                  </div>
+                  <div>
+                    <h3 className="font-serif text-3xl group-hover:text-rose">{title}</h3>
+                    <p className="mt-1 text-sm text-rose/85">Mensal, quinzenal ou semanal. {vase}</p>
+                    {from && (
+                      <p className="mt-3 font-serif text-3xl text-rose">
+                        <span className="font-sans text-xs text-rose/70">a partir de </span>
+                        {formatPrice(from.price_cents)}
+                        <span className="ml-1 font-sans text-xs text-rose/70">por mês</span>
+                      </p>
+                    )}
+                  </div>
+                </Link>
+              );
+            })}
           </div>
           <div className="mt-10 text-center">
             <Link href="/assinaturas" className="rounded-full bg-rose px-7 py-3 text-sm font-medium text-wine-deep hover:bg-cream">
@@ -181,7 +194,7 @@ export default async function Home() {
         <div className="mx-auto grid max-w-6xl items-center gap-10 px-4 py-20 sm:px-6 md:grid-cols-2">
           <div className="mx-auto aspect-[4/5] w-full max-w-sm overflow-hidden rounded-t-[999px] rounded-b-3xl">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/fotos/buque-hortensias.jpg" alt="Buquê de hortênsias azuis e verdes montado pela Isa" className="h-full w-full object-cover" />
+            <img src="/fotos/isa-perfil.jpg" alt="Isabella Parasmo com um arranjo de orquídeas brancas, delfínios azuis e rosas" className="h-full w-full object-cover object-[70%_center]" />
           </div>
           <div>
             <p className="font-script text-3xl text-wine/80">muito prazer</p>
