@@ -56,6 +56,21 @@ export default async function LojaPage({ searchParams }: { searchParams: Promise
         ))}
       </nav>
 
+      <p className="mx-auto mt-8 max-w-2xl text-center text-sm leading-relaxed text-muted">
+        <span className="font-medium text-wine">Criação livre:</span> você escolhe o tamanho e a Isa monta com as flores frescas da semana.
+        As flores e as cores dependem da disponibilidade, então podem ocorrer variações sutis.
+        Para flores ou cores específicas,{" "}
+        <a
+          href={whatsappLink("Olá, Isa! Gostaria de encomendar flores ou cores específicas.")}
+          target="_blank"
+          rel="noreferrer"
+          className="text-wine underline underline-offset-4"
+        >
+          encomende pelo WhatsApp
+        </a>
+        .
+      </p>
+
       {products.length === 0 ? (
         <p className="mt-16 text-center text-muted">Nenhum produto nesta categoria por enquanto.</p>
       ) : (

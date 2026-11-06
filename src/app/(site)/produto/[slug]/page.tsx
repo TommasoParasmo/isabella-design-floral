@@ -44,9 +44,10 @@ export default async function ProductPage({ params }: Props) {
           {formatPrice(product.price_cents)}
         </p>
         {installments && <p className="text-sm text-muted">{installments} no cartão</p>}
-        <p className="mt-6 leading-relaxed text-muted">{product.description}</p>
+        <p className="mt-6 leading-relaxed whitespace-pre-line text-muted">{product.description}</p>
         <ul className="mt-6 space-y-2 text-sm text-ink/80">
           {product.flower_count && <li>• {product.flower_count} flores escolhidas por você</li>}
+          {product.made_to_order && <li>• Você escolhe o tamanho, a Isa escolhe as flores frescas da semana</li>}
           <li>• Montado à mão no dia da entrega</li>
           <li>• Entrega agendada em São Paulo (manhã, tarde ou noite)</li>
           {product.same_day && (
@@ -57,6 +58,21 @@ export default async function ProductPage({ params }: Props) {
         <div className="mt-8">
           {product.flower_count ? <BuildBouquet product={product} flowers={flowers} /> : <AddToCart product={product} />}
         </div>
+        {product.made_to_order && (
+          <p className="mt-6 rounded-2xl bg-blush px-5 py-4 text-sm leading-relaxed text-ink/80">
+            As flores e as cores dependem da disponibilidade da semana, então podem ocorrer variações sutis em relação à foto.
+            Quer flores ou cores específicas?{" "}
+            <a
+              href={whatsappLink(`Olá, Isa! Gostaria de encomendar um ${product.name.replace(/ - Criação Livre$/i, "")} com flores específicas.`)}
+              target="_blank"
+              rel="noreferrer"
+              className="text-wine underline underline-offset-4"
+            >
+              Encomende pelo WhatsApp
+            </a>
+            .
+          </p>
+        )}
         <a
           href={whatsappLink(`Olá, Isa! Tenho uma dúvida sobre o ${product.name}.`)}
           target="_blank"

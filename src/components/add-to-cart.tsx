@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { isAvailable, maxQuantity } from "@/lib/products";
 import type { Product } from "@/lib/types";
 import { useCart } from "./cart-provider";
 
@@ -9,8 +10,8 @@ export function AddToCart({ product }: { product: Product }) {
   const { add } = useCart();
   const router = useRouter();
   const [quantity, setQuantity] = useState(1);
-  const soldOut = product.stock <= 0;
-  const max = Math.max(product.stock, 1);
+  const soldOut = !isAvailable(product);
+  const max = maxQuantity(product);
 
   if (soldOut) {
     return (

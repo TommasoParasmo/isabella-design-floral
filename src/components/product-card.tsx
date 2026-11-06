@@ -2,11 +2,12 @@ import Link from "next/link";
 import { storeConfig } from "@/lib/config";
 import { isSameDayOpen } from "@/lib/delivery";
 import { formatPrice, installmentText } from "@/lib/format";
+import { isAvailable } from "@/lib/products";
 import type { Product } from "@/lib/types";
 import { FlowerArt } from "./flower-art";
 
 export function ProductCard({ product }: { product: Product }) {
-  const soldOut = product.stock <= 0;
+  const soldOut = !isAvailable(product);
   return (
     <Link href={`/produto/${product.slug}`} className="group block">
       <div className="relative aspect-[4/5] overflow-hidden rounded-t-[999px] rounded-b-2xl bg-blush">

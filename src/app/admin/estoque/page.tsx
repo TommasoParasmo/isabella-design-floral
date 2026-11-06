@@ -13,7 +13,7 @@ const reasonLabel: Record<string, string> = {
 export default async function EstoquePage() {
   const { supabase } = await requireAdmin();
   const [{ data: allProducts }, { data: flowers }, { data: movements }] = await Promise.all([
-    supabase.from("products").select("id, name, stock, low_stock_threshold, active, flower_count").order("name"),
+    supabase.from("products").select("id, name, stock, low_stock_threshold, active, flower_count, made_to_order").order("name"),
     supabase.from("flowers").select("id, name, stock, low_stock_threshold, active").order("position").order("name"),
     supabase
       .from("stock_movements")
@@ -22,8 +22,8 @@ export default async function EstoquePage() {
       .limit(30),
   ]);
 
-  // Buquês montáveis não têm estoque próprio: o que conta são as flores.
-  const products = (allProducts ?? []).filter((p) => !p.flower_count);
+  // Buquês montáveis e criação livre não têm estoque próprio.
+  const products = (allProducts ?? []).filter((p) => !p.flower_count && !p.made_to_order);
   const activeProducts = products.filter((p) => p.active);
   const inactiveProducts = products.filter((p) => !p.active);
 

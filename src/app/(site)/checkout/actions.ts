@@ -69,7 +69,7 @@ export async function placeOrder(input: CheckoutInput): Promise<CheckoutResult> 
   const ids = data.items.map((i) => i.productId);
   const flowerIds = data.items.flatMap((i) => i.flowers?.map((f) => f.flowerId) ?? []);
   const [{ data: products, error: productsError }, { data: flowers, error: flowersError }] = await Promise.all([
-    supabase.from("products").select("id, name, price_cents, stock, same_day, active, flower_count").in("id", ids),
+    supabase.from("products").select("id, name, price_cents, stock, same_day, active, flower_count, made_to_order").in("id", ids),
     flowerIds.length
       ? supabase.from("flowers").select("id, name, stock, active, extra_price_cents, position").in("id", flowerIds)
       : Promise.resolve({ data: [], error: null }),
@@ -92,7 +92,7 @@ export async function placeOrder(input: CheckoutInput): Promise<CheckoutResult> 
 
     if (!product.flower_count) {
       productUse.set(product.id, (productUse.get(product.id) ?? 0) + item.quantity);
-      if (product.stock < productUse.get(product.id)!) {
+      if (!product.made_to_order && product.stock < productUse.get(product.id)!) {
         return { ok: false, error: `Temos só ${product.stock} unidade(s) de ${product.name} no momento.` };
       }
       lines.push({ product, quantity: item.quantity, unitPrice: product.price_cents, flowers: null });

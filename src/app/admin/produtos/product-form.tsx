@@ -10,6 +10,7 @@ export type ProductFormValues = {
   price_cents?: number;
   low_stock_threshold?: number;
   flower_count?: number | null;
+  made_to_order?: boolean;
   featured?: boolean;
   same_day?: boolean;
   active?: boolean;
@@ -74,6 +75,7 @@ export function ProductForm({ product = {}, categories }: { product?: ProductFor
         <label className="flex items-center gap-2"><input type="checkbox" name="active" defaultChecked={product.active ?? true} /> Visível na loja</label>
         <label className="flex items-center gap-2"><input type="checkbox" name="featured" defaultChecked={product.featured} /> Destaque na home</label>
         <label className="flex items-center gap-2"><input type="checkbox" name="same_day" defaultChecked={product.same_day ?? true} /> Entrega no mesmo dia</label>
+        <label className="flex items-center gap-2"><input type="checkbox" name="made_to_order" defaultChecked={product.made_to_order ?? false} /> Criação livre (sem controle de estoque)</label>
       </div>
       <button className="rounded-full bg-wine px-8 py-3 text-sm text-cream hover:bg-wine-deep">Salvar produto</button>
       {!product.id && <p className="text-xs text-muted">O estoque inicial é lançado em Estoque → Entrada (no buquê montável, é o estoque das flores).</p>}

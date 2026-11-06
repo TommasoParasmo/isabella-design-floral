@@ -1,10 +1,11 @@
 import { createPublicClient } from "./supabase/public";
 import { isSupabaseConfigured } from "./supabase/server";
 import { nowInSaoPaulo, type DeliverySlot } from "./delivery";
+import { isAvailable } from "./products";
 import { seedCategories, seedDeliverySlots, seedFlowers, seedPlans, seedProducts, seedWorkshops } from "./seed-data";
 import type { Category, Flower, Product, SubscriptionPlan, Workshop } from "./types";
 
-const PRODUCT_FIELDS = "id, slug, name, description, category_id, price_cents, image_url, stock, featured, same_day, flower_count";
+const PRODUCT_FIELDS = "id, slug, name, description, category_id, price_cents, image_url, stock, featured, same_day, flower_count, made_to_order";
 
 // Flores à venda para montar buquês, na ordem da Isa.
 export async function getFlowers(): Promise<Flower[]> {
@@ -85,7 +86,7 @@ export async function getProducts(categorySlug?: string, onlySameDay = false): P
 
   return (await withFlowerStock(products))
     .filter((p) => (category ? p.category_id === category.id : !p.category_id || !hidden.has(p.category_id)))
-    .filter((p) => !onlySameDay || (p.same_day && p.stock > 0));
+    .filter((p) => !onlySameDay || (p.same_day && isAvailable(p)));
 }
 
 export async function getFeaturedProducts(): Promise<Product[]> {

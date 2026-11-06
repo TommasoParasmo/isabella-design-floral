@@ -23,6 +23,8 @@ export type Product = {
   same_day: boolean;
   // Buquê montável: quantas flores o cliente escolhe. Nulo = produto comum.
   flower_count: number | null;
+  // Criação livre: a Isa monta com as flores da semana. Sem controle de estoque.
+  made_to_order: boolean;
 };
 
 export type Flower = {
