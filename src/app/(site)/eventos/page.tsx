@@ -56,6 +56,46 @@ const eventTypes = [
   },
 ];
 
+// Textos do PDF "Flower Bar" da Isa.
+const flowerBarIdeal = [
+  "Aniversários, Dia das Mães, Dia dos Namorados e outras comemorações",
+  "Eventos corporativos, confraternizações, open house e lançamentos",
+  "Aulas de yoga, meditação e bem-estar",
+  "Workshops, brunchs e tardes de meninas",
+  "Casamentos, despedidas de solteira e chá de bebê",
+  "Feiras, bazares e ações de marketing",
+];
+
+const flowerBarOptions = [
+  {
+    title: "Opção 1",
+    subtitle: "Monte o seu próprio buquê",
+    image: "/fotos/flower-bar-opcao-1.jpg",
+    alt: "Flower bar com baldes de flores e quadro com as instruções para montar o buquê",
+    items: [
+      "Você escolhe suas flores e folhagens",
+      "Monte do jeito que quiser",
+      "Escolha o tamanho do buquê (quantidade de flores)",
+      "Ideal para quem gosta de criar",
+      "Flores frescas da estação",
+      "Opção de embalagem + cartão",
+    ],
+  },
+  {
+    title: "Opção 2",
+    subtitle: "Montagem ao vivo por florista profissional",
+    image: "/fotos/flower-bar-opcao-2.jpg",
+    alt: "Estante de flower bar com baldes de rosas, hortênsias e flores coloridas",
+    items: [
+      "Escolha o estilo do buquê",
+      "Escolha o tamanho do buquê (quantidade de flores)",
+      "Perfeito para presentes e surpresas",
+      "Flores frescas da estação",
+      "Opção de embalagem + cartão",
+    ],
+  },
+];
+
 const weddingGallery = [
   ["/fotos/casamento-arco-jardim.jpg", "Arco de rosas e corredor de flores em cerimônia ao ar livre"],
   ["/fotos/casamento-hortensias-mar.jpg", "Arranjos altos de hortênsias brancas em altar com vista para o mar"],
@@ -128,6 +168,11 @@ export default function EventosPage() {
               </a>
             </li>
           ))}
+          <li>
+            <a href="#flower-bar" className="block rounded-full border border-wine bg-wine px-5 py-2 text-sm text-cream hover:bg-wine-deep">
+              Flower Bar
+            </a>
+          </li>
         </ul>
       </nav>
 
@@ -169,8 +214,71 @@ export default function EventosPage() {
         ))}
       </section>
 
+      {/* Flower Bar */}
+      <section id="flower-bar" className="scroll-mt-24 bg-blush py-20">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6">
+          <div className="grid items-center gap-10 md:grid-cols-2">
+            <div className="mx-auto aspect-[4/5] w-full max-w-sm overflow-hidden rounded-t-[999px] rounded-b-3xl">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/fotos/flower-bar.jpg" alt="Flower bar ao ar livre com baldes de flores coloridas e mesa com fitas e papéis" className="h-full w-full object-cover" />
+            </div>
+            <div>
+              <p className="font-script text-3xl text-wine/80">uma floricultura no seu evento</p>
+              <h2 className="mt-1 font-serif text-4xl sm:text-5xl">Flower Bar</h2>
+              <p className="mt-5 leading-relaxed text-muted">
+                Uma experiência inspirada na Europa, onde os convidados vivem uma floricultura de forma interativa e
+                personalizada. Cada um monta o seu próprio buquê ou conta com a curadoria da nossa equipe.
+              </p>
+              <h3 className="mt-6 text-sm font-medium tracking-wider text-wine uppercase">Ideal para</h3>
+              <ul className="mt-3 space-y-2">
+                {flowerBarIdeal.map((s) => (
+                  <li key={s} className="flex gap-3 text-sm text-ink/90">
+                    <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-wine" aria-hidden />
+                    {s}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+
+          <div className="mt-14 grid gap-6 md:grid-cols-2">
+            {flowerBarOptions.map((o) => (
+              <article key={o.title} className="grid gap-5 rounded-3xl border border-rose-soft bg-cream p-6 sm:grid-cols-[160px_1fr]">
+                <div className="aspect-[4/5] overflow-hidden rounded-2xl">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={o.image} alt={o.alt} loading="lazy" className="h-full w-full object-cover" />
+                </div>
+                <div>
+                  <p className="text-xs tracking-[0.2em] text-muted uppercase">{o.title}</p>
+                  <h3 className="mt-1 font-serif text-2xl">{o.subtitle}</h3>
+                  <ul className="mt-3 space-y-1.5 text-sm text-ink/90">
+                    {o.items.map((item) => <li key={item}>✿ {item}</li>)}
+                  </ul>
+                </div>
+              </article>
+            ))}
+          </div>
+
+          <div className="mx-auto mt-10 max-w-2xl text-center">
+            <p className="text-sm leading-relaxed text-muted">
+              Para o orçamento, conte o número estimado de participantes, a data, o horário, o local e qual opção você
+              prefere. Referências, tema e duração também ajudam a montar uma proposta sob medida.
+            </p>
+            <a
+              href={whatsappLink("Olá, Isa! Vim pelo site e gostaria de um orçamento de Flower Bar para o meu evento.")}
+              target="_blank"
+              rel="noreferrer"
+              className="mt-6 inline-flex items-center gap-2 rounded-full bg-wine px-7 py-3 text-sm text-cream hover:bg-wine-deep"
+            >
+              <WhatsAppIcon />
+              Pedir orçamento do Flower Bar
+            </a>
+          </div>
+        </div>
+      </section>
+
       {/* Casamentos assinados pela Isa */}
-      <section className="mx-auto max-w-6xl px-4 pb-20 sm:px-6">
+      <section className="mx-auto max-w-6xl px-4 py-20 sm:px-6">
         <SectionTitle eyebrow="alguns projetos" title="Casamentos assinados pela Isa" />
         <div className="mt-10 grid grid-cols-2 gap-3 md:grid-cols-4">
           {weddingGallery.map(([src, alt]) => (
