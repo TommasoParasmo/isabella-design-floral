@@ -249,7 +249,8 @@ export function CounterSale({ products, flowers }: { products: Product[]; flower
               <input type="checkbox" checked={autoPrint} onChange={(e) => toggleAutoPrint(e.target.checked)} className="accent-wine" />
               Imprimir o comprovante na mini impressora ao finalizar
             </label>
-            <PrinterConnect />
+            {/* Remonta depois de cada impressão para mostrar a impressora conectada. */}
+            <PrinterConnect key={printStatus?.text ?? "inicio"} />
           </div>
         )}
       </aside>
