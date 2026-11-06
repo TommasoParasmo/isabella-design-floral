@@ -8,7 +8,8 @@ alter table public.products
 comment on column public.products.made_to_order is
   'Criação livre: feito na hora com as flores disponíveis. Sem controle de estoque.';
 
-update public.products set made_to_order = true where name ilike '%criação livre%';
+-- Criação livre não é buquê montável: o cliente não escolhe flores.
+update public.products set made_to_order = true, flower_count = null where name ilike '%criação livre%';
 
 create or replace function public.confirm_order_payment(p_order_id uuid, p_payment_id text, p_payment_method text)
 returns boolean
