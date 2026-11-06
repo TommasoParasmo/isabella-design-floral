@@ -84,6 +84,21 @@ export default async function WorkshopsPage() {
           </article>
         ))}
       </div>
+
+      <div className="mt-20">
+        <SectionTitle eyebrow="quem já passou por aqui" title="Turmas anteriores" />
+        <div className="mx-auto mt-10 grid max-w-4xl gap-4 sm:grid-cols-2">
+          {[
+            ["/fotos/turma-loja.jpg", "Turma de workshop com aventais rosa segurando os buquês que montaram"],
+            ["/fotos/turma-jardim.jpg", "Turma de workshop no jardim, cada aluna com o seu buquê de flores pink"],
+          ].map(([src, alt]) => (
+            <div key={src} className="aspect-[3/4] overflow-hidden rounded-3xl">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={src} alt={alt} loading="lazy" className="h-full w-full object-cover" />
+            </div>
+          ))}
+        </div>
+      </div>
     </section>
   );
 }
