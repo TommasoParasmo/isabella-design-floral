@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { requireAdmin } from "@/lib/admin";
+import { buildReceipt, RECEIPT_ORDER_FIELDS, type ReceiptOrder } from "@/lib/receipt";
 
 const ORDER_STATUSES = ["pago", "em_preparo", "saiu_para_entrega", "entregue", "retirado"] as const;
 
@@ -193,6 +194,14 @@ export async function registerCounterSale(input: z.input<typeof counterSaleSchem
   revalidatePath("/admin/flores");
   revalidatePath("/admin");
   return { ok: true as const, orderId: orderId as string };
+}
+
+// Comprovante pronto para a mini impressora (usado logo depois da venda no balcão).
+export async function getReceiptData(orderId: string) {
+  const { supabase } = await requireAdmin();
+  const { data: order, error } = await supabase.from("orders").select(RECEIPT_ORDER_FIELDS).eq("id", orderId).maybeSingle();
+  if (error || !order) return null;
+  return buildReceipt(order as unknown as ReceiptOrder);
 }
 
 const workshopSchema = z.object({

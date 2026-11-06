@@ -3,17 +3,11 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireAdmin } from "@/lib/admin";
 import { flowerSummary, formatPrice } from "@/lib/format";
+import { buildReceipt, RECEIPT_ORDER_FIELDS, type ReceiptOrder } from "@/lib/receipt";
 import { site } from "@/lib/site";
 import { ReceiptActions } from "./receipt-actions";
 
 export const metadata: Metadata = { title: "Comprovante" };
-
-const paymentLabel: Record<string, string> = {
-  pix: "Pix",
-  cartao_credito: "Cartão de crédito",
-  cartao_debito: "Cartão de débito",
-  dinheiro: "Dinheiro",
-};
 
 type Item = { id: string; product_name: string; quantity: number; unit_price_cents: number; flowers: { name: string; quantity: number }[] | null };
 
@@ -22,19 +16,14 @@ export default async function ComprovantePage({ params }: { params: Promise<{ id
   const { supabase } = await requireAdmin();
   const { data: order } = await supabase
     .from("orders")
-    .select("id, code, status, created_at, customer_name, customer_phone, customer_cpf, payment_method, delivery_fee_cents, discount_cents, total_cents, order_items(id, product_name, quantity, unit_price_cents, flowers)")
+    .select(RECEIPT_ORDER_FIELDS)
     .eq("id", id)
     .maybeSingle();
   if (!order) notFound();
 
   const items = order.order_items as Item[];
-  const date = new Intl.DateTimeFormat("pt-BR", {
-    dateStyle: "short",
-    timeStyle: "short",
-    timeZone: "America/Sao_Paulo",
-  }).format(new Date(order.created_at));
-  const payment = order.payment_method ? (paymentLabel[order.payment_method] ?? order.payment_method.replace(/_/g, " ")) : null;
-  const cnpj = process.env.FISCAL_CNPJ?.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, "$1.$2.$3/$4-$5");
+  const receipt = buildReceipt(order as unknown as ReceiptOrder);
+  const { date, payment, cnpj } = receipt;
 
   const unpaid = ["aguardando_pagamento", "cancelado"].includes(order.status);
   const text = [
@@ -61,7 +50,7 @@ export default async function ComprovantePage({ params }: { params: Promise<{ id
       <div className="flex items-center justify-between print:hidden">
         <Link href={`/admin/pedidos/${order.id}`} className="text-xs text-muted hover:text-wine">← Pedido</Link>
       </div>
-      {!unpaid && <ReceiptActions whatsappUrl={whatsappUrl} />}
+      {!unpaid && <ReceiptActions whatsappUrl={whatsappUrl} receipt={receipt} />}
 
       {/* Térmica Epson TM-T20X, bobina de 80 mm: área útil de 72 mm, só preto. */}
       <style>{`@media print {
