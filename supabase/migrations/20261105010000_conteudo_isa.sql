@@ -53,7 +53,13 @@ on conflict (slug) do update set
 -- Turmas de exemplo saem do site (inativas, sem apagar inscrições).
 update public.workshops set active = false where slug in ('buque-de-noiva', 'arranjos-de-natal');
 
+-- A turma de sábado já foi criada pelo painel (slug workshop-guirlanda-de-natal,
+-- 12 vagas). Aqui ela só ganha a foto, e a turma de domingo é criada igual.
+-- Em bancos novos as duas são criadas.
 insert into public.workshops (slug, title, description, starts_at, duration_minutes, price_cents, capacity, includes, image_url) values
-  ('guirlanda-de-natal-21-11', 'Guirlanda de Natal', 'Vamos aprender a montar uma guirlanda de Natal com flores naturais, com uma pausa para o coffee break. No final, você leva a sua guirlanda para casa.', '2026-11-21 10:00-03', 180, 38000, 10, array['Todos os materiais', 'Coffee break', 'Sua guirlanda para levar para casa'], '/fotos/workshop-guirlanda-natal.jpg'),
-  ('guirlanda-de-natal-29-11', 'Guirlanda de Natal', 'Vamos aprender a montar uma guirlanda de Natal com flores naturais, com uma pausa para o coffee break. No final, você leva a sua guirlanda para casa.', '2026-11-29 10:00-03', 180, 38000, 10, array['Todos os materiais', 'Coffee break', 'Sua guirlanda para levar para casa'], '/fotos/workshop-guirlanda-natal.jpg')
+  ('workshop-guirlanda-de-natal', 'Guirlanda de Natal - Sábado', 'Iremos aprender a montar uma guirlanda de natal com flores naturais e uma pausa com coffee break. No final você levará sua guirlanda para casa', '2026-11-21 10:00-03', 180, 38000, 12, array['Materiais para confeccionar a guirlanda e coffee break'], '/fotos/workshop-guirlanda-natal.jpg'),
+  ('guirlanda-de-natal-domingo', 'Guirlanda de Natal - Domingo', 'Iremos aprender a montar uma guirlanda de natal com flores naturais e uma pausa com coffee break. No final você levará sua guirlanda para casa', '2026-11-29 10:00-03', 180, 38000, 12, array['Materiais para confeccionar a guirlanda e coffee break'], '/fotos/workshop-guirlanda-natal.jpg')
 on conflict (slug) do nothing;
+
+update public.workshops set image_url = '/fotos/workshop-guirlanda-natal.jpg'
+ where slug = 'workshop-guirlanda-de-natal' and image_url is null;
