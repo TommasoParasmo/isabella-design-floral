@@ -1,11 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import { FlowerPicker, selectedCount, selectionExtraCents, selectionToChoices, type FlowerSelection } from "@/components/flower-picker";
 import { flowerSummary, formatPrice } from "@/lib/format";
 import type { Flower, FlowerChoice } from "@/lib/types";
-import { registerCounterSale } from "../actions";
+import { connectPrinter, isPrinterSupported, printReceipt } from "@/lib/cat-printer";
+import type { ReceiptData } from "@/lib/receipt";
+import { getReceiptData, registerCounterSale } from "../actions";
+import { MiniPrinterButton, printErrorMessage, PrinterConnect } from "../mini-printer";
+
+const AUTO_PRINT_KEY = "balcao:imprimir-automatico";
 
 type Product = { id: string; name: string; price_cents: number; stock: number; flower_count: number | null; made_to_order: boolean };
 type Line = { key: string; productId: string; name: string; unitPrice: number; quantity: number; flowers?: FlowerChoice[] };
@@ -25,6 +30,28 @@ export function CounterSale({ products, flowers }: { products: Product[]; flower
   const [discount, setDiscount] = useState("");
   const [message, setMessage] = useState<{ ok: boolean; text: string; orderId?: string } | null>(null);
   const [pending, startTransition] = useTransition();
+  const [printSupported, setPrintSupported] = useState(false);
+  const [autoPrint, setAutoPrint] = useState(true);
+  const [receipt, setReceipt] = useState<ReceiptData | null>(null);
+  const [printStatus, setPrintStatus] = useState<{ ok: boolean; text: string } | null>(null);
+
+  useEffect(() => {
+    setPrintSupported(isPrinterSupported());
+    try {
+      setAutoPrint(localStorage.getItem(AUTO_PRINT_KEY) !== "nao");
+    } catch {
+      /* sem localStorage: fica ligado */
+    }
+  }, []);
+
+  function toggleAutoPrint(on: boolean) {
+    setAutoPrint(on);
+    try {
+      localStorage.setItem(AUTO_PRINT_KEY, on ? "sim" : "nao");
+    } catch {
+      /* ignora */
+    }
+  }
 
   const subtotal = lines.reduce((n, l) => n + l.unitPrice * l.quantity, 0);
   const discountCents = Math.round(Number(discount.replace(",", ".") || 0) * 100);
@@ -66,6 +93,11 @@ export function CounterSale({ products, flowers }: { products: Product[]; flower
 
   function finish() {
     setMessage(null);
+    setReceipt(null);
+    setPrintStatus(null);
+    // Conecta já no clique: o navegador só mostra a lista de impressoras
+    // durante um clique, e a venda leva alguns segundos para registrar.
+    const printer = printSupported && autoPrint ? connectPrinter().then(() => null, printErrorMessage) : null;
     startTransition(async () => {
       const result = await registerCounterSale({
         items: lines.map((l) => ({
@@ -82,6 +114,22 @@ export function CounterSale({ products, flowers }: { products: Product[]; flower
         setCpf("");
         setDiscount("");
         setMessage({ ok: true, text: `Venda registrada: ${formatPrice(total)}.`, orderId: result.orderId });
+        if (!printSupported) return;
+        const data = await getReceiptData(result.orderId);
+        setReceipt(data);
+        if (!printer || !data) return;
+        const connectError = await printer;
+        if (connectError) {
+          setPrintStatus({ ok: false, text: connectError });
+          return;
+        }
+        setPrintStatus({ ok: true, text: "Imprimindo comprovante…" });
+        try {
+          await printReceipt(data);
+          setPrintStatus({ ok: true, text: "Comprovante impresso." });
+        } catch (err) {
+          setPrintStatus({ ok: false, text: printErrorMessage(err) });
+        }
       } else {
         setMessage({ ok: false, text: result.error });
       }
@@ -183,6 +231,10 @@ export function CounterSale({ products, flowers }: { products: Product[]; flower
             )}
           </p>
         )}
+        {printStatus && (
+          <p className={`text-xs ${printStatus.ok ? "text-green-800" : "text-wine"}`} role="status">{printStatus.text}</p>
+        )}
+        {receipt && !pending && <MiniPrinterButton receipt={receipt} className="w-full rounded-full border border-wine py-2 text-sm text-wine hover:bg-blush disabled:opacity-60" />}
         <button
           type="button"
           disabled={pending || lines.length === 0}
@@ -191,6 +243,15 @@ export function CounterSale({ products, flowers }: { products: Product[]; flower
         >
           {pending ? "Registrando…" : "Finalizar venda"}
         </button>
+        {printSupported && (
+          <div className="space-y-1 text-xs text-muted">
+            <label className="flex items-center gap-2">
+              <input type="checkbox" checked={autoPrint} onChange={(e) => toggleAutoPrint(e.target.checked)} className="accent-wine" />
+              Imprimir o comprovante na mini impressora ao finalizar
+            </label>
+            <PrinterConnect />
+          </div>
+        )}
       </aside>
     </div>
   );
