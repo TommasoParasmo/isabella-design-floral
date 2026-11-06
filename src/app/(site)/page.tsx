@@ -5,7 +5,7 @@ import { SectionTitle } from "@/components/section-title";
 import { getActiveCollection, getCategories, getFeaturedProducts, getPlans, getUpcomingWorkshops } from "@/lib/catalog";
 import { formatDateTime, formatPrice } from "@/lib/format";
 import { cheapestPlan, planKinds } from "@/lib/plans";
-import { whatsappLink } from "@/lib/site";
+import { site, whatsappLink } from "@/lib/site";
 
 export const revalidate = 60;
 
@@ -44,7 +44,7 @@ export default async function Home() {
           <div className="mx-auto w-full max-w-sm">
             <div className="aspect-[4/5] overflow-hidden rounded-t-[999px] rounded-b-3xl border-[10px] border-rose/30">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/fotos/arranjo-bordo.jpg" alt="Arranjo de celósias vermelhas e boca-de-leão em vaso branco" className="h-full w-full object-cover" />
+              <img src="/fotos/isa-perfil.jpg" alt="Isabella Parasmo com um arranjo de orquídeas brancas, delfínios azuis e rosas" className="h-full w-full object-cover object-[70%_center]" />
             </div>
           </div>
         </div>
@@ -194,7 +194,7 @@ export default async function Home() {
         <div className="mx-auto grid max-w-6xl items-center gap-10 px-4 py-20 sm:px-6 md:grid-cols-2">
           <div className="mx-auto aspect-[4/5] w-full max-w-sm overflow-hidden rounded-t-[999px] rounded-b-3xl">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/fotos/isa-perfil.jpg" alt="Isabella Parasmo com um arranjo de orquídeas brancas, delfínios azuis e rosas" className="h-full w-full object-cover object-[70%_center]" />
+            <img src="/fotos/isa-loja.jpg" alt="Isabella Parasmo na porta da loja, com baldes de flores frescas" className="h-full w-full object-cover" />
           </div>
           <div>
             <p className="font-script text-3xl text-wine/80">muito prazer</p>
@@ -202,6 +202,9 @@ export default async function Home() {
             <p className="mt-5 leading-relaxed text-muted">
               Designer floral apaixonada por cores profundas e composições delicadas. Cada peça é criada à mão no
               ateliê, com flores selecionadas no dia, para transformar datas especiais em memórias.
+            </p>
+            <p className="mt-4 text-sm text-ink/80">
+              Ateliê: {site.address}, {site.city}
             </p>
             <a
               href={whatsappLink()}

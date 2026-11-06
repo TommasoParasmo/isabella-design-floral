@@ -29,8 +29,8 @@ const eventTypes = [
     eyebrow: "o grande dia",
     title: "Casamentos",
     text: "Um projeto floral pensado junto com os noivos, da cerimônia à festa. A Isa acompanha cada detalhe para que as flores contem a história de vocês.",
-    image: "/fotos/buque-doce-rosa.jpg",
-    alt: "Buquê de rosas em tons de rosa",
+    image: "/fotos/casamento-arco-lago.jpg",
+    alt: "Cerimônia de casamento à beira do lago com arco de flores brancas",
     services: [
       "Buquê da noiva, lapelas e arranjos de cabelo",
       "Decoração de cerimônia, altar e corredor",
@@ -55,6 +55,13 @@ const eventTypes = [
     message: "Olá, Isa! Vim pelo site e gostaria de um orçamento de flores para uma celebração.",
   },
 ];
+
+const weddingGallery = [
+  ["/fotos/casamento-arco-jardim.jpg", "Arco de rosas e corredor de flores em cerimônia ao ar livre"],
+  ["/fotos/casamento-hortensias-mar.jpg", "Arranjos altos de hortênsias brancas em altar com vista para o mar"],
+  ["/fotos/casamento-arco-lago.jpg", "Arco de flores brancas e corredor branco à beira do lago"],
+  ["/fotos/casamento-colorido.jpg", "Arco e arranjos coloridos em tons de pink, laranja e roxo"],
+] as const;
 
 const steps = [
   ["Conversa", "Você conta pelo WhatsApp a data, o local, o número de convidados e o estilo que imagina."],
@@ -160,6 +167,19 @@ export default function EventosPage() {
             </div>
           </article>
         ))}
+      </section>
+
+      {/* Casamentos assinados pela Isa */}
+      <section className="mx-auto max-w-6xl px-4 pb-20 sm:px-6">
+        <SectionTitle eyebrow="alguns projetos" title="Casamentos assinados pela Isa" />
+        <div className="mt-10 grid grid-cols-2 gap-3 md:grid-cols-4">
+          {weddingGallery.map(([src, alt]) => (
+            <div key={src} className="aspect-[3/4] overflow-hidden rounded-2xl">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={src} alt={alt} loading="lazy" className="h-full w-full object-cover" />
+            </div>
+          ))}
+        </div>
       </section>
 
       {/* Como funciona */}

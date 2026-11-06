@@ -9,24 +9,37 @@ export const seedCategories: Category[] = [
   { id: "c0", slug: "natal", name: "Natal", description: "Guirlandas, centros de mesa e arranjos para as festas.", position: 0, seasonal: true, active_from: "2026-11-01", active_until: "2026-12-25", headline: "Coleção de Natal" },
 ];
 
-const bouquet = (id: string, slug: string, name: string, flower_count: number, price_cents: number, image: string): Product => ({
+const sizeText = {
+  P: "Tamanho P: ideal para pequenos ambientes, mesas de canto ou lembranças especiais.",
+  M: "Tamanho M: se destaca em mesas de jantar, aparadores ou pequenos espaços.",
+  G: "Tamanho G: ideal para salas, escritórios ou eventos.",
+} as const;
+
+// Criação livre: o cliente escolhe o tamanho e a Isa monta com as flores da semana.
+const freeCreation = (id: string, slug: string, name: string, size: keyof typeof sizeText, category_id: string, price_cents: number, image: string, featured = false): Product => ({
   id,
   slug,
-  name,
-  description: `Buquê com ${flower_count} flores que você escolhe, montado à mão pela Isa com papel e laço de cetim.`,
-  category_id: "c1",
+  name: `${name} - Criação Livre`,
+  description: `Nós cuidamos da criação.\n\n${sizeText[size]}\n\nObs: as flores e cores dependem da disponibilidade e podem ocorrer variações sutis.`,
+  category_id,
   price_cents,
   stock: 0,
-  featured: true,
+  featured,
   same_day: true,
   image_url: `/fotos/${image}.jpg`,
-  flower_count,
+  flower_count: null,
+  made_to_order: true,
 });
 
 export const seedProducts: Product[] = [
-  bouquet("p1", "buque-pequeno", "Buquê Pequeno", 10, 14900, "buque-doce-rosa"),
-  bouquet("p2", "buque-medio", "Buquê Médio", 20, 24900, "buque-rose"),
-  bouquet("p3", "buque-grande", "Buquê Grande", 30, 34900, "buque-jardim-bordo"),
+  freeCreation("p1", "buque-pequeno", "Buquê Pequeno", "P", "c1", 21000, "buque-colorido", true),
+  freeCreation("p2", "buque-medio", "Buquê Médio", "M", "c1", 28000, "buque-rose", true),
+  freeCreation("p3", "buque-grande", "Buquê Grande", "G", "c1", 36000, "buque-jardim-bordo", true),
+  freeCreation("p4", "vaso-pequeno", "Vaso Pequeno", "P", "c2", 22700, "arranjo-sol"),
+  freeCreation("p5", "vaso-medio", "Vaso Médio", "M", "c2", 27900, "arranjo-lirios"),
+  freeCreation("p6", "vaso-grande", "Vaso Grande", "G", "c2", 46200, "arranjo-rubi"),
+  freeCreation("p7", "box-floral-pequeno", "Box Floral Médio", "M", "c2", 38500, "arranjo-gerberas", true),
+  freeCreation("p8", "box-floral-grande", "Box Floral Grande", "G", "c2", 54900, "arranjo-caixa-rosas"),
 ];
 
 export const seedFlowers: Flower[] = [
@@ -60,8 +73,8 @@ export const seedPlans: SubscriptionPlan[] = [
 ];
 
 export const seedWorkshops: Workshop[] = [
-  { id: "w1", slug: "workshop-guirlanda-de-natal", title: "Guirlanda de Natal - Sábado", description: "Vamos aprender a montar uma guirlanda de Natal com flores naturais, com uma pausa para o coffee break. No final, você leva a sua guirlanda para casa.", starts_at: "2026-11-21T10:00:00-03:00", duration_minutes: 180, location: "Ateliê Isabella Parasmo", price_cents: 38000, capacity: 12, image_url: "/fotos/workshop-guirlanda-natal.jpg", includes: ["Todos os materiais", "Coffee break", "Sua guirlanda para levar para casa"], seats_left: 12 },
-  { id: "w2", slug: "guirlanda-de-natal-domingo", title: "Guirlanda de Natal - Domingo", description: "Vamos aprender a montar uma guirlanda de Natal com flores naturais, com uma pausa para o coffee break. No final, você leva a sua guirlanda para casa.", starts_at: "2026-11-29T10:00:00-03:00", duration_minutes: 180, location: "Ateliê Isabella Parasmo", price_cents: 38000, capacity: 12, image_url: "/fotos/workshop-guirlanda-natal.jpg", includes: ["Todos os materiais", "Coffee break", "Sua guirlanda para levar para casa"], seats_left: 12 },
+  { id: "w1", slug: "workshop-guirlanda-de-natal", title: "Guirlanda de Natal - Sábado", description: "Vamos aprender a montar uma guirlanda de Natal com flores naturais, com uma pausa para o coffee break. No final, você leva a sua guirlanda para casa.", starts_at: "2026-11-21T10:00:00-03:00", duration_minutes: 180, location: "Ateliê Isabella Parasmo · Rua Santa Justina, 501, Vila Olímpia", price_cents: 38000, capacity: 12, image_url: "/fotos/workshop-guirlanda-natal.jpg", includes: ["Todos os materiais", "Coffee break", "Sua guirlanda para levar para casa"], seats_left: 12 },
+  { id: "w2", slug: "guirlanda-de-natal-domingo", title: "Guirlanda de Natal - Domingo", description: "Vamos aprender a montar uma guirlanda de Natal com flores naturais, com uma pausa para o coffee break. No final, você leva a sua guirlanda para casa.", starts_at: "2026-11-29T10:00:00-03:00", duration_minutes: 180, location: "Ateliê Isabella Parasmo · Rua Santa Justina, 501, Vila Olímpia", price_cents: 38000, capacity: 12, image_url: "/fotos/workshop-guirlanda-natal.jpg", includes: ["Todos os materiais", "Coffee break", "Sua guirlanda para levar para casa"], seats_left: 12 },
 ];
 
 export const seedDeliverySlots: DeliverySlot[] = [

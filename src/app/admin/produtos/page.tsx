@@ -7,7 +7,7 @@ export default async function ProdutosAdminPage() {
   const { supabase } = await requireAdmin();
   const { data: products } = await supabase
     .from("products")
-    .select("id, slug, name, price_cents, stock, image_url, active, featured, flower_count")
+    .select("id, slug, name, price_cents, stock, image_url, active, featured, flower_count, made_to_order")
     .order("active", { ascending: false })
     .order("price_cents");
 
@@ -31,7 +31,7 @@ export default async function ProdutosAdminPage() {
               </div>
               <div className="text-sm">
                 <p className="font-medium">{p.name}</p>
-                <p className="text-muted">{formatPrice(p.price_cents)} · {p.flower_count ? `${p.flower_count} flores à escolha` : `${p.stock} em estoque`}</p>
+                <p className="text-muted">{formatPrice(p.price_cents)} · {p.made_to_order ? "Criação livre" : p.flower_count ? `${p.flower_count} flores à escolha` : `${p.stock} em estoque`}</p>
                 <p className="mt-1 text-xs text-muted">{!p.active ? "Oculto" : p.featured ? "Destaque" : ""}</p>
               </div>
             </Link>

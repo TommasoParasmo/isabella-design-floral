@@ -4,6 +4,7 @@ import { FlowerArt } from "@/components/flower-art";
 import { SectionTitle } from "@/components/section-title";
 import { getUpcomingWorkshops } from "@/lib/catalog";
 import { formatDateTime, formatPrice } from "@/lib/format";
+import { site } from "@/lib/site";
 
 export const metadata: Metadata = { title: "Workshops" };
 export const revalidate = 60;
@@ -17,6 +18,33 @@ export default async function WorkshopsPage() {
         title="Workshops"
         intro="Turmas pequenas no ateliê, com todo o material incluso. Você aprende, cria e leva sua peça para casa."
       />
+      <div className="mx-auto mt-12 grid max-w-4xl items-center gap-6 rounded-3xl bg-blush p-6 sm:grid-cols-[1fr_1fr_1.1fr]">
+        {[
+          ["/fotos/atelie-sala.jpg", "Sala de workshops do ateliê, com mesa de madeira e cadeiras pretas"],
+          ["/fotos/atelie-mesa.jpg", "Mesa de trabalho do ateliê com prateleiras de materiais"],
+        ].map(([src, alt]) => (
+          <div key={src} className="aspect-[4/5] overflow-hidden rounded-2xl">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={src} alt={alt} className="h-full w-full object-cover" />
+          </div>
+        ))}
+        <div>
+          <p className="font-script text-3xl text-wine/80">o ateliê</p>
+          <h2 className="mt-1 font-serif text-3xl">Onde acontecem os workshops</h2>
+          <p className="mt-3 text-sm leading-relaxed text-muted">
+            Uma mesa grande, flores frescas e tudo o que você precisa para criar. As turmas são pequenas para a Isa
+            acompanhar cada pessoa de perto.
+          </p>
+          <a
+            href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${site.address}, ${site.city}`)}`}
+            target="_blank"
+            rel="noreferrer"
+            className="mt-4 inline-block text-sm text-wine underline underline-offset-4"
+          >
+            {site.address}, {site.city}
+          </a>
+        </div>
+      </div>
       <div className="mt-14 space-y-8">
         {workshops.length === 0 && <p className="text-center text-muted">Novas turmas em breve.</p>}
         {workshops.map((w) => (

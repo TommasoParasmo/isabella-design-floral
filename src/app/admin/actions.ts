@@ -112,6 +112,7 @@ const productSchema = z.object({
     .pipe(z.number().int().min(1).max(200).nullable()),
   featured: z.literal("on").optional(),
   same_day: z.literal("on").optional(),
+  made_to_order: z.literal("on").optional(),
   active: z.literal("on").optional(),
 });
 
@@ -138,9 +139,11 @@ export async function saveProduct(formData: FormData) {
     category_id: data.category_id || null,
     price_cents: data.price,
     low_stock_threshold: data.low_stock_threshold,
-    flower_count: data.flower_count,
+    // Criação livre não é buquê montável: quem escolhe as flores é a Isa.
+    flower_count: data.made_to_order === "on" ? null : data.flower_count,
     featured: data.featured === "on",
     same_day: data.same_day === "on",
+    made_to_order: data.made_to_order === "on",
     active: data.active === "on",
     updated_at: new Date().toISOString(),
     ...(image_url ? { image_url } : {}),

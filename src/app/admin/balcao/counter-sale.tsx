@@ -7,7 +7,7 @@ import { flowerSummary, formatPrice } from "@/lib/format";
 import type { Flower, FlowerChoice } from "@/lib/types";
 import { registerCounterSale } from "../actions";
 
-type Product = { id: string; name: string; price_cents: number; stock: number; flower_count: number | null };
+type Product = { id: string; name: string; price_cents: number; stock: number; flower_count: number | null; made_to_order: boolean };
 type Line = { key: string; productId: string; name: string; unitPrice: number; quantity: number; flowers?: FlowerChoice[] };
 const methods = [
   { id: "pix", label: "Pix" },
@@ -41,7 +41,7 @@ export function CounterSale({ products, flowers }: { products: Product[]; flower
 
   function changeProduct(p: Product, delta: number) {
     setLines((current) => {
-      const q = Math.min(Math.max(qty(p.id) + delta, 0), p.stock);
+      const q = Math.min(Math.max(qty(p.id) + delta, 0), p.made_to_order ? 99 : p.stock);
       const rest = current.filter((l) => l.key !== p.id);
       return q === 0 ? rest : [...rest, { key: p.id, productId: p.id, name: p.name, unitPrice: p.price_cents, quantity: q }];
     });
@@ -128,12 +128,12 @@ export function CounterSale({ products, flowers }: { products: Product[]; flower
             <li key={p.id} className="flex items-center justify-between gap-3 rounded-2xl border border-rose-soft p-4">
               <div className="text-sm">
                 <p className="font-medium">{p.name}</p>
-                <p className="text-muted">{formatPrice(p.price_cents)} · {p.stock} un.</p>
+                <p className="text-muted">{formatPrice(p.price_cents)} · {p.made_to_order ? "criação livre" : `${p.stock} un.`}</p>
               </div>
               <div className="flex items-center rounded-full border border-rose-soft text-sm">
                 <button type="button" className="px-3 py-1.5 text-wine" onClick={() => changeProduct(p, -1)} aria-label={`Remover ${p.name}`}>−</button>
                 <span className="w-5 text-center">{qty(p.id)}</span>
-                <button type="button" className="px-3 py-1.5 text-wine disabled:opacity-30" disabled={p.stock <= qty(p.id)} onClick={() => changeProduct(p, 1)} aria-label={`Adicionar ${p.name}`}>+</button>
+                <button type="button" className="px-3 py-1.5 text-wine disabled:opacity-30" disabled={!p.made_to_order && p.stock <= qty(p.id)} onClick={() => changeProduct(p, 1)} aria-label={`Adicionar ${p.name}`}>+</button>
               </div>
             </li>
           ),

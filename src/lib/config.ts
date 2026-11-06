@@ -8,5 +8,5 @@ export const storeConfig = {
   // Quantos dias à frente o cliente pode agendar.
   bookingWindowDays: 45,
   maxInstallments: Number(process.env.NEXT_PUBLIC_MAX_INSTALLMENTS ?? 3),
-  pickupAddress: process.env.NEXT_PUBLIC_PICKUP_ADDRESS ?? "Ateliê Isabella Parasmo, São Paulo",
+  pickupAddress: process.env.NEXT_PUBLIC_PICKUP_ADDRESS ?? "Ateliê Isabella Parasmo, Rua Santa Justina, 501, Vila Olímpia, São Paulo",
 };

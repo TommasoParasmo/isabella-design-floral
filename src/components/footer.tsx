@@ -30,7 +30,13 @@ export function Footer() {
                 @{site.instagram}
               </a>
             </li>
-            <li>{site.city}</li>
+            <li>
+              <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${site.address}, ${site.city}`)}`} target="_blank" rel="noreferrer" className="hover:text-cream">
+                {site.address}
+                <br />
+                {site.city}
+              </a>
+            </li>
           </ul>
         </div>
       </div>

@@ -4,6 +4,7 @@ export const site = {
   description:
     "Buquês, arranjos, assinaturas florais e workshops em São Paulo, com entrega agendada.",
   city: "São Paulo, SP",
+  address: "Rua Santa Justina, 501, Vila Olímpia",
   whatsapp: process.env.NEXT_PUBLIC_WHATSAPP ?? "5511950596714",
   phone: "(11) 95059-6714",
   email: "isabellaparasmodesignerfloral@outlook.com",

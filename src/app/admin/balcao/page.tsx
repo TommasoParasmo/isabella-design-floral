@@ -4,7 +4,7 @@ import { CounterSale } from "./counter-sale";
 export default async function BalcaoPage() {
   const { supabase } = await requireAdmin();
   const [{ data: products }, { data: flowers }] = await Promise.all([
-    supabase.from("products").select("id, name, price_cents, stock, flower_count").eq("active", true).order("price_cents"),
+    supabase.from("products").select("id, name, price_cents, stock, flower_count, made_to_order").eq("active", true).order("price_cents"),
     supabase.from("flowers").select("id, slug, name, extra_price_cents, stock").eq("active", true).order("position").order("name"),
   ]);
   return (
