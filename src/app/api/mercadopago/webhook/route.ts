@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { getPayment, getPreapproval, isValidSignature, type MpPayment } from "@/lib/mercadopago";
+import { alertOrderPaid, alertSubscriptionStarted, alertWorkshopPaid } from "@/lib/sale-alerts";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 const methodLabel: Record<string, string> = {
@@ -21,12 +22,14 @@ async function handleOrderPayment(supabase: Supabase, payment: MpPayment, orderI
 
   if (payment.status === "approved") {
     if (!paidEnough(payment, order.total_cents)) throw new Error(`Pedido ${order.id}: valor divergente`);
-    const { error } = await supabase.rpc("confirm_order_payment", {
+    const { data: confirmed, error } = await supabase.rpc("confirm_order_payment", {
       p_order_id: order.id,
       p_payment_id: String(payment.id),
       p_payment_method: methodLabel[payment.payment_type_id] ?? payment.payment_type_id,
     });
     if (error) throw error;
+    // Só avisa na primeira confirmação: o Mercado Pago repete as notificações.
+    if (confirmed === true) await alertOrderPaid(order.id);
   } else if (["rejected", "cancelled"].includes(payment.status) && order.status === "aguardando_pagamento") {
     await supabase.from("orders").update({ mp_payment_id: String(payment.id) }).eq("id", order.id);
   } else if (["refunded", "charged_back"].includes(payment.status)) {
@@ -49,7 +52,7 @@ async function handleSubscriptionPayment(supabase: Supabase, payment: MpPayment,
     if (!paidEnough(payment, sub.total_cents)) throw new Error(`Assinatura ${sub.id}: valor divergente`);
     const ends = new Date();
     ends.setMonth(ends.getMonth() + (sub.gift_months ?? 0));
-    await supabase
+    const { data: started } = await supabase
       .from("subscriptions")
       .update({
         status: "ativa",
@@ -57,7 +60,10 @@ async function handleSubscriptionPayment(supabase: Supabase, payment: MpPayment,
         started_at: new Date().toISOString(),
         ends_on: ends.toISOString().slice(0, 10),
       })
-      .eq("id", sub.id);
+      .eq("id", sub.id)
+      .eq("status", "pendente")
+      .select("id");
+    if (started?.length) await alertSubscriptionStarted(sub.id);
   } else if (["refunded", "charged_back"].includes(payment.status)) {
     await supabase.from("subscriptions").update({ status: "cancelada", canceled_at: new Date().toISOString() }).eq("id", sub.id);
   }
@@ -66,7 +72,7 @@ async function handleSubscriptionPayment(supabase: Supabase, payment: MpPayment,
 async function handleWorkshopPayment(supabase: Supabase, payment: MpPayment, registrationId: string) {
   const { data: reg } = await supabase
     .from("workshop_registrations")
-    .select("id, total_cents")
+    .select("id, total_cents, status")
     .eq("id", registrationId)
     .maybeSingle();
   if (!reg) return;
@@ -78,6 +84,8 @@ async function handleWorkshopPayment(supabase: Supabase, payment: MpPayment, reg
       p_payment_id: String(payment.id),
     });
     if (error) throw error;
+    // Avisa a inscrição nova ou, se a turma lotou antes do pagamento, o estorno a fazer.
+    if (reg.status === "aguardando_pagamento") await alertWorkshopPaid(reg.id);
   } else if (["refunded", "charged_back"].includes(payment.status)) {
     await supabase.from("workshop_registrations").update({ status: "cancelada" }).eq("id", reg.id);
   }
@@ -114,6 +122,7 @@ export async function POST(request: NextRequest) {
     const ref = preapproval.external_reference;
     const status = preapprovalStatus[preapproval.status];
     if (ref?.startsWith("sub:") && status) {
+      const { data: before } = await supabase.from("subscriptions").select("status").eq("id", ref.slice(4)).maybeSingle();
       await supabase
         .from("subscriptions")
         .update({
@@ -123,6 +132,7 @@ export async function POST(request: NextRequest) {
           ...(status === "cancelada" ? { canceled_at: new Date().toISOString() } : {}),
         })
         .eq("id", ref.slice(4));
+      if (status === "ativa" && before?.status === "pendente") await alertSubscriptionStarted(ref.slice(4));
     }
   }
 

@@ -1,13 +1,21 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import Link from "next/link";
 import { requireAdmin } from "@/lib/admin";
 import { SignOutButton } from "./sign-out-button";
 
-export const metadata: Metadata = { title: "Painel", robots: { index: false } };
+// O painel pode ser instalado no celular (Adicionar à Tela de Início) e abre como app.
+export const metadata: Metadata = {
+  title: "Painel",
+  robots: { index: false },
+  manifest: "/painel.webmanifest",
+  appleWebApp: { capable: true, title: "Ateliê", statusBarStyle: "default" },
+};
+export const viewport: Viewport = { themeColor: "#7a1b33" };
 export const dynamic = "force-dynamic";
 
 const nav = [
   { href: "/admin", label: "Agenda" },
+  { href: "/admin/recebidos", label: "Recebidos" },
   { href: "/admin/vendas", label: "Vendas" },
   { href: "/admin/balcao", label: "Balcão" },
   { href: "/admin/estoque", label: "Estoque" },
