@@ -59,24 +59,26 @@ export function PhotoManager({
     const room = MAX_PHOTOS - photos.length;
     if (list.length > room) setError(`Cabem até ${MAX_PHOTOS} fotos. Só as primeiras ${Math.max(room, 0)} foram enviadas.`);
     const supabase = createClient();
-    setUploading((n) => n + Math.min(list.length, room));
-    await Promise.all(
-      list.slice(0, Math.max(room, 0)).map(async (file) => {
+    const batch = list.slice(0, Math.max(room, 0));
+    setUploading((n) => n + batch.length);
+    // Sobem juntas, mas entram na lista na ordem em que foram escolhidas.
+    const urls = await Promise.all(
+      batch.map(async (file) => {
         try {
           const blob = await shrink(file);
           const ext = blob.type === "image/jpeg" ? "jpg" : file.name.split(".").pop()?.toLowerCase() || "jpg";
           const path = `${folder}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
           const { error: uploadError } = await supabase.storage.from("produtos").upload(path, blob, { contentType: blob.type || file.type });
           if (uploadError) throw uploadError;
-          const url = supabase.storage.from("produtos").getPublicUrl(path).data.publicUrl;
-          setPhotos((p) => [...p, url]);
+          return supabase.storage.from("produtos").getPublicUrl(path).data.publicUrl;
         } catch {
           setError("Não consegui enviar uma das fotos. Tente de novo.");
-        } finally {
-          setUploading((n) => n - 1);
+          return null;
         }
       }),
     );
+    setPhotos((p) => [...p, ...urls.filter((u): u is string => !!u)]);
+    setUploading((n) => n - batch.length);
   }
 
   const move = (from: number, to: number) =>
@@ -138,7 +140,7 @@ export function PhotoManager({
         required
         checked={uploading === 0}
         onChange={() => {}}
-        onInvalid={(e) => e.currentTarget.setCustomValidity("Aguarde as fotos terminarem de enviar")}
+        ref={(el) => el?.setCustomValidity(uploading > 0 ? "Aguarde as fotos terminarem de enviar" : "")}
         className="sr-only"
         tabIndex={-1}
         aria-hidden
