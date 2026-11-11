@@ -94,6 +94,17 @@ export async function saveFlower(formData: FormData) {
   revalidatePath("/", "layout");
 }
 
+// Endereços das fotos, na ordem do formulário. Só aceita fotos do nosso
+// armazenamento ou da pasta /fotos do site.
+function photoList(formData: FormData) {
+  const storage = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/produtos/`;
+  const urls = formData
+    .getAll("images")
+    .filter((v): v is string => typeof v === "string")
+    .filter((v) => v.startsWith(storage) || /^\/fotos\/[\w.-]+$/.test(v));
+  return [...new Set(urls)].slice(0, 12);
+}
+
 const productSchema = z.object({
   id: z.string().uuid().optional().or(z.literal("")),
   name: z.string().trim().min(2),
@@ -122,16 +133,7 @@ export async function saveProduct(formData: FormData) {
   const data = productSchema.parse(Object.fromEntries([...formData.entries()].filter(([, v]) => typeof v === "string")));
   if (!Number.isFinite(data.price) || data.price < 0) throw new Error("Preço inválido");
 
-  let image_url: string | undefined;
-  const image = formData.get("image");
-  if (image instanceof File && image.size > 0) {
-    if (!image.type.startsWith("image/")) throw new Error("Envie uma imagem");
-    const ext = image.name.split(".").pop()?.toLowerCase() || "jpg";
-    const path = `${data.slug}-${Date.now()}.${ext}`;
-    const { error: uploadError } = await supabase.storage.from("produtos").upload(path, image, { contentType: image.type });
-    if (uploadError) throw uploadError;
-    image_url = supabase.storage.from("produtos").getPublicUrl(path).data.publicUrl;
-  }
+  const images = photoList(formData);
 
   const row = {
     name: data.name,
@@ -147,7 +149,8 @@ export async function saveProduct(formData: FormData) {
     made_to_order: data.made_to_order === "on",
     active: data.active === "on",
     updated_at: new Date().toISOString(),
-    ...(image_url ? { image_url } : {}),
+    images,
+    image_url: images[0] ?? null,
   };
 
   const { error } = data.id
@@ -220,6 +223,7 @@ export async function createWorkshop(formData: FormData) {
   const { supabase } = await requireAdmin();
   const data = workshopSchema.parse(Object.fromEntries(formData));
   if (!Number.isFinite(data.price) || data.price < 0) throw new Error("Preço inválido");
+  const images = photoList(formData);
   const { error } = await supabase.from("workshops").insert({
     title: data.title,
     slug: data.slug,
@@ -230,9 +234,27 @@ export async function createWorkshop(formData: FormData) {
     price_cents: data.price,
     capacity: data.capacity,
     includes: (data.includes ?? "").split(",").map((s) => s.trim()).filter(Boolean),
+    images,
+    image_url: images[0] ?? null,
   });
   if (error) throw error;
   revalidatePath("/admin/workshops");
   revalidatePath("/workshops");
+  revalidatePath("/");
+}
+
+export async function saveWorkshopPhotos(workshopId: string, formData: FormData) {
+  const { supabase } = await requireAdmin();
+  const images = photoList(formData);
+  const { data, error } = await supabase
+    .from("workshops")
+    .update({ images, image_url: images[0] ?? null })
+    .eq("id", workshopId)
+    .select("slug")
+    .maybeSingle();
+  if (error) throw error;
+  revalidatePath("/admin/workshops");
+  revalidatePath("/workshops");
+  if (data) revalidatePath(`/workshops/${data.slug}`);
   revalidatePath("/");
 }

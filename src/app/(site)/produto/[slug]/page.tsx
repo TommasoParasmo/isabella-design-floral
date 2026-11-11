@@ -4,9 +4,11 @@ import { notFound } from "next/navigation";
 import { AddToCart } from "@/components/add-to-cart";
 import { BuildBouquet } from "@/components/build-bouquet";
 import { FlowerArt } from "@/components/flower-art";
+import { PhotoGallery } from "@/components/photo-gallery";
 import { storeConfig } from "@/lib/config";
 import { getFlowers, getProduct } from "@/lib/catalog";
 import { formatPrice, installmentText } from "@/lib/format";
+import { photosOf } from "@/lib/products";
 import { whatsappLink } from "@/lib/site";
 
 export const revalidate = 60;
@@ -22,18 +24,18 @@ export default async function ProductPage({ params }: Props) {
   const product = await getProduct((await params).slug);
   if (!product) notFound();
   const flowers = product.flower_count ? await getFlowers() : [];
+  const photos = photosOf(product);
   const installments = installmentText(product.price_cents, storeConfig.maxInstallments);
 
   return (
     <section className="mx-auto grid max-w-6xl gap-10 px-4 py-14 sm:px-6 md:grid-cols-2 md:gap-16">
-      <div className="aspect-[4/5] overflow-hidden rounded-t-[999px] rounded-b-3xl bg-blush">
-        {product.image_url ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={product.image_url} alt={product.name} className="h-full w-full object-cover" />
-        ) : (
+      {photos.length > 0 ? (
+        <PhotoGallery photos={photos} alt={product.name} frameClass="aspect-[4/5] rounded-t-[999px] rounded-b-3xl" />
+      ) : (
+        <div className="aspect-[4/5] overflow-hidden rounded-t-[999px] rounded-b-3xl bg-blush">
           <FlowerArt seed={product.slug} className="h-full w-full" />
-        )}
-      </div>
+        </div>
+      )}
       <div className="flex flex-col justify-center">
         <Link href="/loja" className="text-xs tracking-[0.2em] text-muted uppercase hover:text-wine">
           ← Voltar para a loja
