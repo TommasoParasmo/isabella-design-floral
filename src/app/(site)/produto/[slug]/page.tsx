@@ -45,7 +45,7 @@ export default async function ProductPage({ params }: Props) {
           {product.flower_count && flowers.some((f) => f.extra_price_cents > 0) && <span className="mr-2 font-sans text-sm text-muted">a partir de</span>}
           {formatPrice(product.price_cents)}
         </p>
-        {installments && <p className="text-sm text-muted">{installments} no cartão</p>}
+        {installments && <p className="text-sm text-muted">{installments}</p>}
         <p className="mt-6 leading-relaxed whitespace-pre-line text-muted">{product.description}</p>
         <ul className="mt-6 space-y-2 text-sm text-ink/80">
           {product.flower_count && <li>• {product.flower_count} flores escolhidas por você</li>}

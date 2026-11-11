@@ -254,7 +254,7 @@ export function CheckoutForm({ slots, cutoffHour, pickupAddress, maxInstallments
           <span>Total</span>
           <span className="font-serif text-3xl text-wine">{formatPrice(total)}</span>
         </p>
-        <p className="mt-1 text-right text-xs text-muted">Pix ou cartão em até {maxInstallments}x</p>
+        <p className="mt-1 text-right text-xs text-muted">Pix ou cartão à vista, sem juros. Parcelado em até {maxInstallments}x, com juros do cartão.</p>
         {error && <p className="mt-4 rounded-xl bg-wine/10 p-3 text-sm text-wine" role="alert">{error}</p>}
         <button
           type="submit"
