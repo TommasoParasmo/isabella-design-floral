@@ -1,6 +1,7 @@
 import { requireAdmin } from "@/lib/admin";
 import { formatDateTime, formatPrice } from "@/lib/format";
-import { createWorkshop } from "../actions";
+import { createWorkshop, saveWorkshopPhotos } from "../actions";
+import { PhotoManager } from "../photo-manager";
 import { issueWorkshopInvoice } from "../notas/actions";
 import { DocumentList, type FiscalDocumentRow } from "../notas/document-list";
 import { InvoiceForm } from "../notas/invoice-form";
@@ -11,7 +12,7 @@ export default async function WorkshopsAdminPage() {
   const { supabase } = await requireAdmin();
   const { data: workshops } = await supabase
     .from("workshops")
-    .select("id, title, starts_at, capacity, price_cents, workshop_registrations(id, name, email, phone, cpf, seats, status, issue, fiscal_documents(id, kind, status, environment, number, pdf_url, xml_url, error_message, created_at, recipient))")
+    .select("id, title, starts_at, image_url, images, capacity, price_cents, workshop_registrations(id, name, email, phone, cpf, seats, status, issue, fiscal_documents(id, kind, status, environment, number, pdf_url, xml_url, error_message, created_at, recipient))")
     .order("starts_at", { ascending: false });
 
   return (
@@ -27,6 +28,13 @@ export default async function WorkshopsAdminPage() {
               <p className="text-xs text-muted">{formatDateTime(w.starts_at)} · {formatPrice(w.price_cents)}</p>
               <h2 className="font-serif text-2xl">{w.title}</h2>
               <p className="text-sm text-muted">{seats} de {w.capacity} vagas confirmadas</p>
+              <details className="mt-3">
+                <summary className="cursor-pointer text-xs text-wine">Fotos ({w.images?.length || (w.image_url ? 1 : 0)})</summary>
+                <form action={saveWorkshopPhotos.bind(null, w.id)} className="mt-3 space-y-3">
+                  <PhotoManager folder="workshops" initial={w.images?.length ? w.images : w.image_url ? [w.image_url] : []} />
+                  <button className="rounded-full bg-wine px-5 py-2 text-xs text-cream hover:bg-wine-deep">Salvar fotos</button>
+                </form>
+              </details>
               {issues.map((r) => (
                 <p key={r.id} className="mt-3 rounded-xl bg-wine/10 p-2 text-xs text-wine">
                   {r.name} ({r.phone}): {r.issue}
@@ -81,6 +89,7 @@ export default async function WorkshopsAdminPage() {
           <input name="duration_hours" type="number" min={1} defaultValue={3} placeholder="Horas" className={field} />
         </div>
         <input name="includes" placeholder="Incluso (separe por vírgula)" className={field} />
+        <PhotoManager folder="workshops" clearOnReset />
         <button className="w-full rounded-full bg-wine py-2.5 text-sm text-cream hover:bg-wine-deep">Criar turma</button>
       </form>
     </div>

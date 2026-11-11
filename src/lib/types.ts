@@ -17,7 +17,10 @@ export type Product = {
   description: string | null;
   category_id: string | null;
   price_cents: number;
+  // Capa (a primeira de images). Usada nos cards, carrinho e pedidos.
   image_url: string | null;
+  // Todas as fotos, na ordem da Isa. Pode vir vazio em cadastros antigos.
+  images?: string[];
   stock: number;
   featured: boolean;
   same_day: boolean;
@@ -63,6 +66,7 @@ export type Workshop = {
   price_cents: number;
   capacity: number;
   image_url: string | null;
+  images?: string[];
   includes: string[];
   seats_left: number;
 };

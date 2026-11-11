@@ -2,8 +2,10 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { FlowerArt } from "@/components/flower-art";
+import { PhotoGallery } from "@/components/photo-gallery";
 import { getUpcomingWorkshops } from "@/lib/catalog";
 import { formatDateTime, formatPrice } from "@/lib/format";
+import { photosOf } from "@/lib/products";
 import { RegisterForm } from "./register-form";
 
 export const dynamic = "force-dynamic";
@@ -22,17 +24,19 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function WorkshopPage({ params }: Props) {
   const w = await findWorkshop((await params).slug);
   if (!w) notFound();
+  const photos = photosOf(w);
 
   return (
     <section className="mx-auto grid max-w-5xl gap-12 px-4 py-14 sm:px-6 lg:grid-cols-[1.2fr_1fr]">
       <div>
         <Link href="/workshops" className="text-xs tracking-[0.2em] text-muted uppercase hover:text-wine">← Workshops</Link>
-        <div className="mt-6 aspect-[16/10] overflow-hidden rounded-3xl">
-          {w.image_url ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={w.image_url} alt="" className="h-full w-full object-cover" />
+        <div className="mt-6">
+          {photos.length > 0 ? (
+            <PhotoGallery photos={photos} alt={w.title} frameClass="aspect-[16/10] rounded-3xl" />
           ) : (
-            <FlowerArt seed={w.slug} className="h-full w-full" />
+            <div className="aspect-[16/10] overflow-hidden rounded-3xl">
+              <FlowerArt seed={w.slug} className="h-full w-full" />
+            </div>
           )}
         </div>
         <p className="mt-6 text-xs tracking-wider text-muted uppercase">{formatDateTime(w.starts_at)}</p>

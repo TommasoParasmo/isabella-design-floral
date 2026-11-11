@@ -33,8 +33,8 @@ O estoque é controlado pela tabela `stock_movements`: cada entrada ou saída (v
 - **Agenda**: pedidos pagos do dia, por período, com botões para avançar o status (em preparo → saiu para entrega → entregue)
 - **Balcão**: venda presencial que baixa o estoque e entra na agenda como pedido retirado
 - **Estoque**: saldo atual, alerta de estoque baixo, entradas, perdas e ajustes
-- **Produtos**: cadastro com foto, preço, destaque e "entrega no mesmo dia"
-- **Assinaturas** e **Workshops**: assinantes, presentes e inscrições confirmadas
+- **Produtos**: cadastro com várias fotos (a primeira é a capa), preço, destaque e "entrega no mesmo dia"
+- **Assinaturas** e **Workshops**: assinantes, presentes, inscrições confirmadas e fotos de cada turma
 - **Notas**: todas as notas emitidas, com PDF, XML e cancelamento
 
 Login em `/entrar`. Para criar a conta da Isa: Supabase → Authentication → Add user (e-mail e senha) e depois:

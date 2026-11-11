@@ -1,4 +1,5 @@
 import { saveProduct } from "../actions";
+import { PhotoManager } from "../photo-manager";
 
 type Category = { id: string; name: string };
 export type ProductFormValues = {
@@ -15,6 +16,7 @@ export type ProductFormValues = {
   same_day?: boolean;
   active?: boolean;
   image_url?: string | null;
+  images?: string[] | null;
 };
 
 const field = "w-full rounded-xl border border-rose-soft bg-cream px-4 py-2.5 text-sm outline-none focus:border-wine";
@@ -67,10 +69,15 @@ export function ProductForm({ product = {}, categories }: { product?: ProductFor
           Com um número aqui, o produto vira buquê montável: o cliente escolhe essa quantidade de flores e o estoque baixado é o das flores.
         </span>
       </label>
-      <label className="block text-sm">
-        Foto {product.image_url && <span className="text-muted">(envie outra para trocar)</span>}
-        <input name="image" type="file" accept="image/*" className="mt-1 block text-sm" />
-      </label>
+      <fieldset className="text-sm">
+        <legend>Fotos</legend>
+        <div className="mt-1">
+          <PhotoManager
+            folder="produtos"
+            initial={product.images?.length ? product.images : product.image_url ? [product.image_url] : []}
+          />
+        </div>
+      </fieldset>
       <div className="flex flex-wrap gap-6 text-sm">
         <label className="flex items-center gap-2"><input type="checkbox" name="active" defaultChecked={product.active ?? true} /> Visível na loja</label>
         <label className="flex items-center gap-2"><input type="checkbox" name="featured" defaultChecked={product.featured} /> Destaque na home</label>
