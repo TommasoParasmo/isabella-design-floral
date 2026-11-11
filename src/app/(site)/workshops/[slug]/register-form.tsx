@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { inputClass } from "@/components/address-fields";
+import { storeConfig } from "@/lib/config";
 import { formatPrice } from "@/lib/format";
 import { registerForWorkshop } from "./actions";
 
@@ -41,6 +42,7 @@ export function RegisterForm({ slug, priceCents, seatsLeft }: { slug: string; pr
         <span>Total</span>
         <span className="font-serif text-3xl text-wine">{formatPrice(priceCents * seats)}</span>
       </p>
+      <p className="-mt-2 text-right text-xs text-muted">Pix ou cartão à vista, sem juros. Parcelado em até {storeConfig.maxInstallments}x, com juros do cartão.</p>
       {error && <p className="rounded-xl bg-wine/10 p-3 text-sm text-wine" role="alert">{error}</p>}
       <button disabled={pending} className="w-full rounded-full bg-wine py-4 text-sm text-cream hover:bg-wine-deep disabled:opacity-50">
         {pending ? "Reservando…" : "Ir para o pagamento"}

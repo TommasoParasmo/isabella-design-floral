@@ -30,6 +30,7 @@ O estoque é controlado pela tabela `stock_movements`: cada entrada ou saída (v
 
 ## Painel da Isa (`/admin`)
 
+- **Recebidos**: tudo o que foi pago nos últimos 30 dias, do mais novo para o mais antigo, e o botão para ligar os avisos no celular
 - **Agenda**: pedidos pagos do dia, por período, com botões para avançar o status (em preparo → saiu para entrega → entregue)
 - **Balcão**: venda presencial que baixa o estoque e entra na agenda como pedido retirado
 - **Estoque**: saldo atual, alerta de estoque baixo, entradas, perdas e ajustes
@@ -42,6 +43,16 @@ Login em `/entrar`. Para criar a conta da Isa: Supabase → Authentication → A
 ```sql
 update public.profiles set is_admin = true where id = (select id from auth.users where email = 'EMAIL_DA_ISA');
 ```
+
+### Painel no celular
+
+O painel funciona como app no celular. No Android (Chrome): menu ⋮ → **Instalar app**. No iPhone (Safari):
+**Compartilhar → Adicionar à Tela de Início**. Depois, em **Recebidos**, toque em **Ligar avisos neste aparelho**:
+cada pedido, inscrição de workshop ou assinatura paga no site chega como notificação, e tocar nela abre o pedido.
+No iPhone os avisos só funcionam com o painel aberto pelo ícone da Tela de Início (iOS 16.4 ou mais novo).
+
+Para ligar no servidor, gere as chaves uma vez com `npx web-push generate-vapid-keys` e coloque
+`NEXT_PUBLIC_VAPID_PUBLIC_KEY` e `VAPID_PRIVATE_KEY` na Vercel. Os aparelhos ficam na tabela `push_subscriptions`.
 
 As funções `is_admin()` e `workshop_availability()` são públicas de propósito: a primeira só responde sobre
 o próprio usuário logado e a segunda só expõe a quantidade de vagas.

@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { AddressFields, emptyAddress, inputClass } from "@/components/address-fields";
+import { storeConfig } from "@/lib/config";
 import { formatPrice } from "@/lib/format";
 import { subscribe } from "./actions";
 
@@ -115,7 +116,7 @@ export function SubscribeForm({ planSlug, priceCents }: { planSlug: string; pric
           <span>{kind === "presente" ? `Total (${giftMonths} meses)` : "Por mês"}</span>
           <span className="font-serif text-3xl text-wine">{formatPrice(total)}</span>
         </p>
-        {kind === "presente" && <p className="mt-1 text-right text-xs text-muted">Pix ou cartão em até 3x</p>}
+        {kind === "presente" && <p className="mt-1 text-right text-xs text-muted">Pix ou cartão à vista, sem juros. Parcelado em até {storeConfig.maxInstallments}x, com juros do cartão.</p>}
         {error && <p className="mt-4 rounded-xl bg-wine/10 p-3 text-sm text-wine" role="alert">{error}</p>}
         <button disabled={pending} className="mt-5 w-full rounded-full bg-wine py-4 text-sm text-cream hover:bg-wine-deep disabled:opacity-50">
           {pending ? "Gerando pagamento…" : kind === "presente" ? "Presentear" : "Assinar"}

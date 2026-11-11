@@ -22,9 +22,11 @@ export const frequencyLabel = {
   mensal: "por mês · uma entrega mensal",
 } as const;
 
+// O Mercado Pago cobra juros de quem parcela, então não mostramos o valor da
+// parcela (ele seria maior que o preço dividido).
 export function installmentText(cents: number, max: number) {
   if (max <= 1 || cents < 100 * max) return null;
-  return `ou ${max}x de ${formatPrice(Math.ceil(cents / max))}`;
+  return `ou em até ${max}x no cartão, com juros`;
 }
 
 // "6 Rosa, 4 Margarida" a partir das flores gravadas no item do pedido.
