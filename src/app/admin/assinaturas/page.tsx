@@ -1,5 +1,6 @@
 import { requireAdmin } from "@/lib/admin";
 import { formatPrice } from "@/lib/format";
+import { ClubePlans } from "./clube-plans";
 
 const statusStyle: Record<string, string> = {
   ativa: "bg-green-100 text-green-900",
@@ -11,11 +12,18 @@ const weekdays = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
 
 export default async function AssinaturasAdminPage() {
   const { supabase } = await requireAdmin();
-  const { data: subs } = await supabase
-    .from("subscriptions")
-    .select("id, status, kind, gift_months, gift_recipient_name, customer_name, customer_phone, preferred_weekday, delivery_address, total_cents, ends_on, created_at, subscription_plans(name, frequency)")
-    .neq("status", "pendente")
-    .order("created_at", { ascending: false });
+  const [{ data: subs }, { data: clubePlans }] = await Promise.all([
+    supabase
+      .from("subscriptions")
+      .select("id, status, kind, gift_months, gift_recipient_name, customer_name, customer_phone, preferred_weekday, delivery_address, total_cents, ends_on, created_at, subscription_plans(name, frequency)")
+      .neq("status", "pendente")
+      .order("created_at", { ascending: false }),
+    supabase
+      .from("clube_plans")
+      .select("id, name, deliveries, price_cents, list_price_cents, badge, description, position, active")
+      .order("position")
+      .order("deliveries"),
+  ]);
 
   const active = (subs ?? []).filter((s) => s.status === "ativa");
 
@@ -23,6 +31,7 @@ export default async function AssinaturasAdminPage() {
     <div>
       <h1 className="font-serif text-4xl">Assinaturas</h1>
       <p className="mt-1 text-sm text-muted">{active.length} ativa(s). Pendentes de pagamento não aparecem aqui.</p>
+      <ClubePlans plans={clubePlans ?? []} />
       <ul className="mt-6 space-y-3">
         {(subs ?? []).map((s) => {
           const plan = s.subscription_plans as unknown as { name: string; frequency: string } | null;

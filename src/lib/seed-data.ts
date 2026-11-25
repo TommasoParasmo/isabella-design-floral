@@ -1,7 +1,7 @@
 // Espelho de supabase/seed.sql. Usado enquanto o Supabase não está configurado,
 // para que o site funcione em desenvolvimento e em prévias.
 import type { DeliverySlot } from "./delivery";
-import type { Category, Flower, Product, SubscriptionPlan, Workshop } from "./types";
+import type { Category, ClubePlan, Flower, Product, SubscriptionPlan, Workshop } from "./types";
 
 export const seedCategories: Category[] = [
   { id: "c1", slug: "buques", name: "Buquês", description: "Buquês assinados, montados à mão no dia da entrega.", position: 1 },
@@ -49,6 +49,12 @@ export const seedFlowers: Flower[] = [
   { id: "f4", slug: "lirio", name: "Lírio", extra_price_cents: 0, stock: 20 },
   { id: "f5", slug: "girassol", name: "Girassol", extra_price_cents: 0, stock: 0 },
   { id: "f6", slug: "cravo", name: "Cravo", extra_price_cents: 0, stock: 30 },
+];
+
+export const seedClubePlans: ClubePlan[] = [
+  { id: "c1", name: "Plano Essencial", deliveries: 4, price_cents: 56900, list_price_cents: null, badge: null, description: null },
+  { id: "c2", name: "Plano Querido", deliveries: 6, price_cents: 84900, list_price_cents: null, badge: "Mais escolhido", description: null },
+  { id: "c3", name: "Plano Inesquecível", deliveries: 8, price_cents: 112900, list_price_cents: null, badge: null, description: null },
 ];
 
 export const seedPlans: SubscriptionPlan[] = [
