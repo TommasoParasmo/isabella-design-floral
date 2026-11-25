@@ -6,7 +6,7 @@ import { useState } from "react";
 import { CartLink } from "./cart-link";
 import { Logo } from "./logo";
 
-const nav = [
+const baseNav = [
   { href: "/loja", label: "Loja" },
   { href: "/loja?hoje=1", label: "Agende sua entrega" },
   { href: "/assinaturas", label: "Assinaturas" },
@@ -15,9 +15,11 @@ const nav = [
   { href: "/#sobre", label: "Sobre" },
 ];
 
-export function Header() {
+// tabs: categorias com aba própria (como Vasos), que entram logo depois de "Loja".
+export function Header({ tabs = [] }: { tabs?: { href: string; label: string }[] }) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
+  const nav = [baseNav[0], ...tabs, ...baseNav.slice(1)];
 
   return (
     <header className="sticky top-0 z-40 border-b border-rose-soft bg-cream/90 backdrop-blur">

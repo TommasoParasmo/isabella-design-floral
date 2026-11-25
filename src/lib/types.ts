@@ -8,6 +8,8 @@ export type Category = {
   active_from?: string | null;
   active_until?: string | null;
   headline?: string | null;
+  // Aba própria: os produtos só aparecem na aba da categoria, fora de "Todos".
+  own_tab?: boolean;
 };
 
 export type Product = {

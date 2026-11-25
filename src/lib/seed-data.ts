@@ -7,6 +7,7 @@ export const seedCategories: Category[] = [
   { id: "c1", slug: "buques", name: "Buquês", description: "Buquês assinados, montados à mão no dia da entrega.", position: 1 },
   { id: "c2", slug: "arranjos", name: "Arranjos", description: "Arranjos em vasos para mesa, casa e recepções.", position: 2 },
   { id: "c0", slug: "natal", name: "Natal", description: "Guirlandas, centros de mesa e arranjos para as festas.", position: 0, seasonal: true, active_from: "2026-11-01", active_until: "2026-12-25", headline: "Coleção de Natal" },
+  { id: "c3", slug: "vasos", name: "Vasos", description: "Vasos para levar sozinhos, presentear ou receber as suas flores.", position: 5, own_tab: true },
 ];
 
 const sizeText = {
@@ -40,6 +41,7 @@ export const seedProducts: Product[] = [
   freeCreation("p6", "vaso-grande", "Vaso Grande", "G", "c2", 46200, "arranjo-rubi"),
   freeCreation("p7", "box-floral-pequeno", "Box Floral Médio", "M", "c2", 38500, "arranjo-gerberas", true),
   freeCreation("p8", "box-floral-grande", "Box Floral Grande", "G", "c2", 54900, "arranjo-caixa-rosas"),
+  { id: "p9", slug: "vaso-de-ceramica", name: "Vaso de cerâmica", description: "Vaso de cerâmica, sem flores.", category_id: "c3", price_cents: 8900, stock: 4, featured: false, same_day: true, image_url: null, flower_count: null, made_to_order: false },
 ];
 
 export const seedFlowers: Flower[] = [

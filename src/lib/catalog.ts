@@ -37,7 +37,7 @@ async function getAllCategories(): Promise<Category[]> {
   if (!isSupabaseConfigured()) return seedCategories;
   const { data, error } = await createPublicClient()
     .from("categories")
-    .select("id, slug, name, description, position, seasonal, active_from, active_until, headline")
+    .select("id, slug, name, description, position, seasonal, active_from, active_until, headline, own_tab")
     .order("position");
   if (error) throw error;
   return data;
@@ -68,8 +68,9 @@ export async function getActiveCollection(): Promise<{ category: Category; produ
 export async function getProducts(categorySlug?: string, onlySameDay = false): Promise<Product[]> {
   const categories = await getAllCategories();
   const today = nowInSaoPaulo().date;
-  // Sem filtro de categoria, esconde as peças de coleções sazonais fora de época.
-  const hidden = new Set(categories.filter((c) => !isVisible(c, today)).map((c) => c.id));
+  // Sem filtro de categoria, esconde as peças de coleções sazonais fora de época
+  // e as das categorias com aba própria (como Vasos), que ficam separadas.
+  const hidden = new Set(categories.filter((c) => !isVisible(c, today) || c.own_tab).map((c) => c.id));
   const category = categorySlug ? categories.find((c) => c.slug === categorySlug) : undefined;
   if (categorySlug && (!category || !isVisible(category, today))) return [];
 
