@@ -2,8 +2,8 @@ import { createPublicClient } from "./supabase/public";
 import { isSupabaseConfigured } from "./supabase/server";
 import { nowInSaoPaulo, type DeliverySlot } from "./delivery";
 import { isAvailable } from "./products";
-import { seedCategories, seedDeliverySlots, seedFlowers, seedPlans, seedProducts, seedWorkshops } from "./seed-data";
-import type { Category, Flower, Product, SubscriptionPlan, Workshop } from "./types";
+import { seedCategories, seedDeliverySlots, seedFlowers, seedClubePlans, seedPlans, seedProducts, seedWorkshops } from "./seed-data";
+import type { Category, ClubePlan, Flower, Product, SubscriptionPlan, Workshop } from "./types";
 
 const PRODUCT_FIELDS = "id, slug, name, description, category_id, price_cents, image_url, images, stock, featured, same_day, flower_count, made_to_order";
 
@@ -37,7 +37,7 @@ async function getAllCategories(): Promise<Category[]> {
   if (!isSupabaseConfigured()) return seedCategories;
   const { data, error } = await createPublicClient()
     .from("categories")
-    .select("id, slug, name, description, position, seasonal, active_from, active_until, headline")
+    .select("id, slug, name, description, position, seasonal, active_from, active_until, headline, own_tab")
     .order("position");
   if (error) throw error;
   return data;
@@ -68,8 +68,9 @@ export async function getActiveCollection(): Promise<{ category: Category; produ
 export async function getProducts(categorySlug?: string, onlySameDay = false): Promise<Product[]> {
   const categories = await getAllCategories();
   const today = nowInSaoPaulo().date;
-  // Sem filtro de categoria, esconde as peças de coleções sazonais fora de época.
-  const hidden = new Set(categories.filter((c) => !isVisible(c, today)).map((c) => c.id));
+  // Sem filtro de categoria, esconde as peças de coleções sazonais fora de época
+  // e as das categorias com aba própria (como Vasos), que ficam separadas.
+  const hidden = new Set(categories.filter((c) => !isVisible(c, today) || c.own_tab).map((c) => c.id));
   const category = categorySlug ? categories.find((c) => c.slug === categorySlug) : undefined;
   if (categorySlug && (!category || !isVisible(category, today))) return [];
 
@@ -126,6 +127,23 @@ export async function getPlans(): Promise<SubscriptionPlan[]> {
     .eq("active", true)
     .order("position");
   if (error) throw error;
+  return data;
+}
+
+// Planos ativos do Clube dos Desatentos, na ordem da Isa.
+export async function getClubePlans(): Promise<ClubePlan[]> {
+  if (!isSupabaseConfigured()) return seedClubePlans;
+  const { data, error } = await createPublicClient()
+    .from("clube_plans")
+    .select("id, name, deliveries, price_cents, list_price_cents, badge, description")
+    .eq("active", true)
+    .order("position")
+    .order("deliveries");
+  // Sem o Clube a página de assinaturas continua de pé.
+  if (error) {
+    console.error("clube_plans", error.message);
+    return [];
+  }
   return data;
 }
 

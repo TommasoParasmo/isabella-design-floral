@@ -89,6 +89,7 @@ export function ProductForm({ product = {}, categories }: { product?: ProductFor
         Sob encomenda: o site mostra &quot;Sob consulta&quot; no lugar do preço e o cliente encomenda pelo WhatsApp (não entra no carrinho).
       </p>
       <button className="rounded-full bg-wine px-8 py-3 text-sm text-cream hover:bg-wine-deep">Salvar produto</button>
+      <p className="text-xs text-muted">Vasos: escolha a categoria Vasos para o produto aparecer só na aba Vasos da loja, separado dos arranjos.</p>
       {!product.id && <p className="text-xs text-muted">O estoque inicial é lançado em Estoque → Entrada (no buquê montável, é o estoque das flores).</p>}
     </form>
   );

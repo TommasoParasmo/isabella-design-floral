@@ -14,6 +14,8 @@ export default async function LojaPage({ searchParams }: { searchParams: Promise
   const onlySameDay = hoje === "1";
   const [categories, products] = await Promise.all([getCategories(), getProducts(categoria, onlySameDay)]);
   const sameDayOpen = isSameDayOpen();
+  // Categoria com aba própria (como Vasos): título dela e sem o aviso de criação livre.
+  const ownTab = categories.find((c) => c.slug === categoria && c.own_tab);
 
   return (
     <section className="mx-auto max-w-6xl px-4 py-16 sm:px-6">
@@ -42,6 +44,8 @@ export default async function LojaPage({ searchParams }: { searchParams: Promise
             </a>
           </div>
         </>
+      ) : ownTab ? (
+        <SectionTitle eyebrow="para a sua casa" title={ownTab.name} intro={ownTab.description ?? undefined} />
       ) : (
         <SectionTitle eyebrow="feito à mão" title="Loja" intro="Todos os pedidos podem ser agendados para o dia e período que você preferir." />
       )}
@@ -56,6 +60,7 @@ export default async function LojaPage({ searchParams }: { searchParams: Promise
         ))}
       </nav>
 
+      {!ownTab && (
       <p className="mx-auto mt-8 max-w-2xl text-center text-sm leading-relaxed text-muted">
         <span className="font-medium text-wine">Criação livre:</span> você escolhe o tamanho e a Isa monta com as flores frescas da semana.
         As flores e as cores dependem da disponibilidade, então podem ocorrer variações sutis.
@@ -70,6 +75,7 @@ export default async function LojaPage({ searchParams }: { searchParams: Promise
         </a>
         .
       </p>
+      )}
 
       {products.length === 0 ? (
         <p className="mt-16 text-center text-muted">Nenhum produto nesta categoria por enquanto.</p>

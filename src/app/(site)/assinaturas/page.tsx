@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { SectionTitle } from "@/components/section-title";
-import { getPlans } from "@/lib/catalog";
+import { getClubePlans, getPlans } from "@/lib/catalog";
 import { formatPrice } from "@/lib/format";
 import { findPlan, howItWorks, planFrequencies, planKinds, planSizes } from "@/lib/plans";
 import { site, whatsappLink } from "@/lib/site";
@@ -22,7 +22,8 @@ const gallery = [
 ] as const;
 
 export default async function AssinaturasPage() {
-  const plans = await getPlans();
+  const [plans, clubePlans] = await Promise.all([getPlans(), getClubePlans()]);
+  const clubeFrom = clubePlans.length ? Math.min(...clubePlans.map((p) => p.price_cents)) : null;
 
   return (
     <>
@@ -41,6 +42,20 @@ export default async function AssinaturasPage() {
             </li>
           ))}
         </ol>
+
+        {clubeFrom != null && (
+          <Link
+            href="/clube-dos-desatentos"
+            className="mx-auto mt-12 flex max-w-3xl flex-col items-center gap-2 rounded-3xl border border-wine bg-blush px-6 py-6 text-center hover:bg-rose-soft/40 sm:flex-row sm:justify-between sm:text-left"
+          >
+            <span>
+              <span className="block font-script text-2xl text-wine/80">novidade</span>
+              <span className="block font-serif text-3xl">Clube dos Desatentos</span>
+              <span className="block text-sm text-muted">Plano anual para quem esquece as datas: você escolhe as datas do ano e nós entregamos as flores.</span>
+            </span>
+            <span className="shrink-0 text-sm text-wine">a partir de {formatPrice(clubeFrom)} por ano →</span>
+          </Link>
+        )}
       </section>
 
       {planKinds.map(({ kind, title, vase, image, imageAlt }, k) => (

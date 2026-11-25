@@ -8,6 +8,8 @@ export type Category = {
   active_from?: string | null;
   active_until?: string | null;
   headline?: string | null;
+  // Aba própria: os produtos só aparecem na aba da categoria, fora de "Todos".
+  own_tab?: boolean;
 };
 
 export type Product = {
@@ -53,6 +55,17 @@ export type SubscriptionPlan = {
   // buque: sem vaso. arranjo: com vaso. Nulo nos planos antigos.
   kind: "buque" | "arranjo" | null;
   size: "pequeno" | "medio" | "grande" | null;
+};
+
+// Clube dos Desatentos: plano anual com N entregas no ano.
+export type ClubePlan = {
+  id: string;
+  name: string;
+  deliveries: number;
+  price_cents: number;
+  list_price_cents: number | null;
+  badge: string | null;
+  description: string | null;
 };
 
 export type Workshop = {
