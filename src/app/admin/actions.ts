@@ -363,7 +363,7 @@ export async function registerWorkshopCounterSale(_prev: WorkshopCounterState, f
   if (data.cpf && data.cpf.length !== 11) return { ok: false, message: "CPF deve ter 11 números." };
 
   const now = new Date().toISOString();
-  const { error } = await supabase.from("workshop_registrations").insert({
+  const { data: inserted, error } = await supabase.from("workshop_registrations").insert({
     workshop_id: workshop.id,
     name: data.name || "Venda no balcão",
     email: data.email || "",
@@ -374,8 +374,24 @@ export async function registerWorkshopCounterSale(_prev: WorkshopCounterState, f
     total_cents: total,
     paid_at: now,
     mp_payment_id: `balcao:${data.paymentMethod}`,
-  });
+  }).select("id").single();
   if (error) return { ok: false, message: error.message };
+
+  // Confere de novo depois de gravar: se uma inscrição online ou outra venda
+  // pegou as últimas vagas ao mesmo tempo, desfaz esta em vez de lotar demais.
+  const { data: after } = await supabase
+    .from("workshop_registrations")
+    .select("seats, status, created_at")
+    .eq("workshop_id", workshop.id)
+    .neq("status", "cancelada");
+  const takenAfter = (after ?? [])
+    .filter((r) => r.status === "confirmada" || (r.status === "aguardando_pagamento" && new Date(r.created_at).getTime() > reservedSince))
+    .reduce((n, r) => n + r.seats, 0);
+  if (takenAfter > workshop.capacity) {
+    await supabase.from("workshop_registrations").update({ status: "cancelada" }).eq("id", inserted.id);
+    revalidateWorkshop(workshop.slug);
+    return { ok: false, message: "As vagas acabaram de ser reservadas no site. Confira a turma e tente de novo." };
+  }
 
   revalidateWorkshop(workshop.slug);
   return {
@@ -387,6 +403,13 @@ export async function registerWorkshopCounterSale(_prev: WorkshopCounterState, f
 // Desfaz uma venda de vagas feita no balcão (por engano), liberando as vagas.
 export async function cancelWorkshopCounterSale(registrationId: string) {
   const { supabase } = await requireAdmin();
+  const { count, error: docsError } = await supabase
+    .from("fiscal_documents")
+    .select("id", { count: "exact", head: true })
+    .eq("workshop_registration_id", registrationId)
+    .in("status", ["processando", "autorizado"]);
+  if (docsError) throw docsError;
+  if (count) throw new Error("Essa venda já tem nota fiscal: cancele a nota em Notas antes de desfazer.");
   const { data, error } = await supabase
     .from("workshop_registrations")
     .update({ status: "cancelada" })
