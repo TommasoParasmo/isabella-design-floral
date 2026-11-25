@@ -55,6 +55,17 @@ export type SubscriptionPlan = {
   size: "pequeno" | "medio" | "grande" | null;
 };
 
+// Clube dos Desatentos: plano anual com N entregas no ano.
+export type ClubePlan = {
+  id: string;
+  name: string;
+  deliveries: number;
+  price_cents: number;
+  list_price_cents: number | null;
+  badge: string | null;
+  description: string | null;
+};
+
 export type Workshop = {
   id: string;
   slug: string;

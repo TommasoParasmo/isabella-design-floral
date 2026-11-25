@@ -2,8 +2,8 @@ import { createPublicClient } from "./supabase/public";
 import { isSupabaseConfigured } from "./supabase/server";
 import { nowInSaoPaulo, type DeliverySlot } from "./delivery";
 import { isAvailable } from "./products";
-import { seedCategories, seedDeliverySlots, seedFlowers, seedPlans, seedProducts, seedWorkshops } from "./seed-data";
-import type { Category, Flower, Product, SubscriptionPlan, Workshop } from "./types";
+import { seedCategories, seedDeliverySlots, seedFlowers, seedClubePlans, seedPlans, seedProducts, seedWorkshops } from "./seed-data";
+import type { Category, ClubePlan, Flower, Product, SubscriptionPlan, Workshop } from "./types";
 
 const PRODUCT_FIELDS = "id, slug, name, description, category_id, price_cents, image_url, images, stock, featured, same_day, flower_count, made_to_order";
 
@@ -126,6 +126,23 @@ export async function getPlans(): Promise<SubscriptionPlan[]> {
     .eq("active", true)
     .order("position");
   if (error) throw error;
+  return data;
+}
+
+// Planos ativos do Clube dos Desatentos, na ordem da Isa.
+export async function getClubePlans(): Promise<ClubePlan[]> {
+  if (!isSupabaseConfigured()) return seedClubePlans;
+  const { data, error } = await createPublicClient()
+    .from("clube_plans")
+    .select("id, name, deliveries, price_cents, list_price_cents, badge, description")
+    .eq("active", true)
+    .order("position")
+    .order("deliveries");
+  // Sem o Clube a página de assinaturas continua de pé.
+  if (error) {
+    console.error("clube_plans", error.message);
+    return [];
+  }
   return data;
 }
 
