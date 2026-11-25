@@ -135,6 +135,11 @@ export async function saveProduct(formData: FormData) {
 
   const images = photoList(formData);
 
+  // Nota fiscal: produto de categoria com NCM próprio (ex.: Vasos) usa o dela; o resto é flor.
+  const category = data.category_id
+    ? (await supabase.from("categories").select("ncm").eq("id", data.category_id).maybeSingle()).data
+    : null;
+
   const row = {
     name: data.name,
     slug: data.slug,
@@ -151,6 +156,7 @@ export async function saveProduct(formData: FormData) {
     updated_at: new Date().toISOString(),
     images,
     image_url: images[0] ?? null,
+    ncm: category?.ncm ?? "06031900",
   };
 
   const { error } = data.id

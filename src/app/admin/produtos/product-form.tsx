@@ -85,6 +85,7 @@ export function ProductForm({ product = {}, categories }: { product?: ProductFor
         <label className="flex items-center gap-2"><input type="checkbox" name="made_to_order" defaultChecked={product.made_to_order ?? false} /> Criação livre (sem controle de estoque)</label>
       </div>
       <button className="rounded-full bg-wine px-8 py-3 text-sm text-cream hover:bg-wine-deep">Salvar produto</button>
+      <p className="text-xs text-muted">Vasos: escolha a categoria Vasos para o produto aparecer só na aba Vasos da loja, separado dos arranjos.</p>
       {!product.id && <p className="text-xs text-muted">O estoque inicial é lançado em Estoque → Entrada (no buquê montável, é o estoque das flores).</p>}
     </form>
   );

@@ -4,6 +4,7 @@ insert into public.categories (slug, name, description, position) values
   ('buques', 'Buquês', 'Buquês assinados, montados à mão no dia da entrega.', 1),
   ('arranjos', 'Arranjos', 'Arranjos em vasos para mesa, casa e recepções.', 2)
 on conflict (slug) do nothing;
+-- A categoria Vasos (aba própria na loja) é criada pela migração 20261125000000_vasos.
 
 -- Os buquês (pequeno, médio, grande) e as flores são criados pela migração
 -- 20261105000000_buques_por_tamanho. Aqui só ligamos os buquês à categoria.
