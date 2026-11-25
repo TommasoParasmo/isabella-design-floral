@@ -42,9 +42,9 @@ export function ProductForm({ product = {}, categories }: { product?: ProductFor
           Preço (R$)
           <input
             name="price"
-            required
             inputMode="decimal"
-            defaultValue={product.price_cents != null ? (product.price_cents / 100).toFixed(2).replace(".", ",") : ""}
+            placeholder="Vazio = sob consulta"
+            defaultValue={product.price_cents ? (product.price_cents / 100).toFixed(2).replace(".", ",") : ""}
             className={`${field} mt-1`}
           />
         </label>
@@ -83,7 +83,11 @@ export function ProductForm({ product = {}, categories }: { product?: ProductFor
         <label className="flex items-center gap-2"><input type="checkbox" name="featured" defaultChecked={product.featured} /> Destaque na home</label>
         <label className="flex items-center gap-2"><input type="checkbox" name="same_day" defaultChecked={product.same_day ?? true} /> Entrega no mesmo dia</label>
         <label className="flex items-center gap-2"><input type="checkbox" name="made_to_order" defaultChecked={product.made_to_order ?? false} /> Criação livre (sem controle de estoque)</label>
+        <label className="flex items-center gap-2"><input type="checkbox" name="on_request" defaultChecked={product.id != null && !product.price_cents} /> Sob encomenda (sem preço no site)</label>
       </div>
+      <p className="-mt-2 text-xs text-muted">
+        Sob encomenda: o site mostra &quot;Sob consulta&quot; no lugar do preço e o cliente encomenda pelo WhatsApp (não entra no carrinho).
+      </p>
       <button className="rounded-full bg-wine px-8 py-3 text-sm text-cream hover:bg-wine-deep">Salvar produto</button>
       {!product.id && <p className="text-xs text-muted">O estoque inicial é lançado em Estoque → Entrada (no buquê montável, é o estoque das flores).</p>}
     </form>

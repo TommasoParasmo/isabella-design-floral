@@ -31,7 +31,7 @@ export default async function ProdutosAdminPage() {
               </div>
               <div className="text-sm">
                 <p className="font-medium">{p.name}</p>
-                <p className="text-muted">{formatPrice(p.price_cents)} · {p.made_to_order ? "Criação livre" : p.flower_count ? `${p.flower_count} flores à escolha` : `${p.stock} em estoque`}</p>
+                <p className="text-muted">{p.price_cents > 0 ? formatPrice(p.price_cents) : "Sob consulta"} · {p.made_to_order ? "Criação livre" : p.flower_count ? `${p.flower_count} flores à escolha` : `${p.stock} em estoque`}</p>
                 <p className="mt-1 text-xs text-muted">{!p.active ? "Oculto" : p.featured ? "Destaque" : ""}</p>
               </div>
             </Link>
