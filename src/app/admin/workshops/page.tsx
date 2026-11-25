@@ -1,6 +1,6 @@
 import { requireAdmin } from "@/lib/admin";
 import { formatDateTime, formatPrice } from "@/lib/format";
-import { createWorkshop, saveWorkshopPhotos } from "../actions";
+import { cancelWorkshopCounterSale, createWorkshop, saveWorkshopPhotos, updateWorkshop } from "../actions";
 import { PhotoManager } from "../photo-manager";
 import { issueWorkshopInvoice } from "../notas/actions";
 import { DocumentList, type FiscalDocumentRow } from "../notas/document-list";
@@ -8,11 +8,23 @@ import { InvoiceForm } from "../notas/invoice-form";
 
 const field = "w-full rounded-xl border border-rose-soft bg-cream px-3 py-2 text-sm";
 
+const paymentLabels: Record<string, string> = { pix: "Pix", cartao_credito: "crédito", cartao_debito: "débito", dinheiro: "dinheiro" };
+
+// Data e hora da turma no fuso de São Paulo, para preencher o formulário.
+function localDateTime(iso: string) {
+  const parts = Object.fromEntries(
+    new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hourCycle: "h23" })
+      .formatToParts(new Date(iso))
+      .map((p) => [p.type, p.value]),
+  );
+  return { date: `${parts.year}-${parts.month}-${parts.day}`, time: `${parts.hour}:${parts.minute}` };
+}
+
 export default async function WorkshopsAdminPage() {
   const { supabase } = await requireAdmin();
   const { data: workshops } = await supabase
     .from("workshops")
-    .select("id, title, starts_at, image_url, images, capacity, price_cents, workshop_registrations(id, name, email, phone, cpf, seats, status, issue, fiscal_documents(id, kind, status, environment, number, pdf_url, xml_url, error_message, created_at, recipient))")
+    .select("id, title, description, starts_at, duration_minutes, includes, active, image_url, images, capacity, price_cents, workshop_registrations(id, name, email, phone, cpf, seats, status, issue, total_cents, mp_payment_id, fiscal_documents(id, kind, status, environment, number, pdf_url, xml_url, error_message, created_at, recipient))")
     .order("starts_at", { ascending: false });
 
   return (
@@ -23,11 +35,56 @@ export default async function WorkshopsAdminPage() {
           const confirmed = w.workshop_registrations.filter((r) => r.status === "confirmada");
           const issues = w.workshop_registrations.filter((r) => r.issue);
           const seats = confirmed.reduce((n, r) => n + r.seats, 0);
+          const { date, time } = localDateTime(w.starts_at);
           return (
-            <section key={w.id} className="rounded-2xl border border-rose-soft p-5">
-              <p className="text-xs text-muted">{formatDateTime(w.starts_at)} · {formatPrice(w.price_cents)}</p>
+            <section key={w.id} className={`rounded-2xl border border-rose-soft p-5 ${w.active ? "" : "opacity-60"}`}>
+              <p className="text-xs text-muted">{formatDateTime(w.starts_at)} · {formatPrice(w.price_cents)}{w.active ? "" : " · oculto no site"}</p>
               <h2 className="font-serif text-2xl">{w.title}</h2>
-              <p className="text-sm text-muted">{seats} de {w.capacity} vagas confirmadas</p>
+              <p className="text-sm text-muted">{seats} de {w.capacity} vagas confirmadas · {Math.max(w.capacity - seats, 0)} disponíveis</p>
+              <details className="mt-3">
+                <summary className="cursor-pointer text-xs text-wine">Editar turma (valor, descrição, data, vagas)</summary>
+                <form action={updateWorkshop.bind(null, w.id)} className="mt-3 space-y-3">
+                  <label className="block text-xs text-muted">
+                    Título
+                    <input name="title" required defaultValue={w.title} className={`${field} mt-1`} />
+                  </label>
+                  <label className="block text-xs text-muted">
+                    Descrição
+                    <textarea name="description" rows={4} defaultValue={w.description ?? ""} className={`${field} mt-1`} />
+                  </label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <label className="block text-xs text-muted">
+                      Data
+                      <input name="date" type="date" required defaultValue={date} className={`${field} mt-1`} />
+                    </label>
+                    <label className="block text-xs text-muted">
+                      Horário
+                      <input name="time" type="time" required defaultValue={time} className={`${field} mt-1`} />
+                    </label>
+                  </div>
+                  <div className="grid grid-cols-3 gap-2">
+                    <label className="block text-xs text-muted">
+                      Preço por pessoa (R$)
+                      <input name="price" required inputMode="decimal" defaultValue={(w.price_cents / 100).toFixed(2).replace(".", ",")} className={`${field} mt-1`} />
+                    </label>
+                    <label className="block text-xs text-muted">
+                      Total de vagas
+                      <input name="capacity" type="number" min={Math.max(seats, 1)} required defaultValue={w.capacity} className={`${field} mt-1`} />
+                    </label>
+                    <label className="block text-xs text-muted">
+                      Horas
+                      <input name="duration_hours" type="number" min={0.5} step={0.5} defaultValue={w.duration_minutes / 60} className={`${field} mt-1`} />
+                    </label>
+                  </div>
+                  <label className="block text-xs text-muted">
+                    Incluso (separe por vírgula)
+                    <input name="includes" defaultValue={(w.includes ?? []).join(", ")} className={`${field} mt-1`} />
+                  </label>
+                  <label className="flex items-center gap-2 text-sm"><input type="checkbox" name="active" defaultChecked={w.active} /> Visível no site</label>
+                  <button className="rounded-full bg-wine px-5 py-2 text-xs text-cream hover:bg-wine-deep">Salvar alterações</button>
+                  <p className="text-xs text-muted">Quem já se inscreveu mantém o valor que pagou. Vendeu vagas pessoalmente? Registre em Balcão → Vagas de workshop.</p>
+                </form>
+              </details>
               <details className="mt-3">
                 <summary className="cursor-pointer text-xs text-wine">Fotos ({w.images?.length || (w.image_url ? 1 : 0)})</summary>
                 <form action={saveWorkshopPhotos.bind(null, w.id)} className="mt-3 space-y-3">
@@ -45,12 +102,25 @@ export default async function WorkshopsAdminPage() {
                   {confirmed.map((r) => {
                     const docs = r.fiscal_documents as FiscalDocumentRow[];
                     const invoiced = docs.some((d) => d.status === "processando" || d.status === "autorizado");
+                    const counter = r.mp_payment_id?.startsWith("balcao:") ? r.mp_payment_id.slice(7) : null;
                     return (
                       <li key={r.id} className="py-2">
                         <div className="flex flex-wrap justify-between gap-2">
-                          <span>{r.name}{r.seats > 1 ? ` (+${r.seats - 1})` : ""}</span>
-                          <span className="text-muted">{r.phone} · {r.email}</span>
+                          <span>
+                            {r.name}{r.seats > 1 ? ` (${r.seats} vagas)` : ""}
+                            {counter && (
+                              <span className="ml-2 text-xs text-muted">
+                                balcão · {paymentLabels[counter] ?? counter}{r.total_cents != null ? ` · ${formatPrice(r.total_cents)}` : ""}
+                              </span>
+                            )}
+                          </span>
+                          <span className="text-muted">{[r.phone, r.email].filter(Boolean).join(" · ")}</span>
                         </div>
+                        {counter && !invoiced && (
+                          <form action={cancelWorkshopCounterSale.bind(null, r.id)} className="mt-1">
+                            <button className="text-xs text-muted underline hover:text-wine">Desfazer esta venda (libera as vagas)</button>
+                          </form>
+                        )}
                         <DocumentList documents={docs} />
                         {!invoiced && (
                           <details className="mt-2">

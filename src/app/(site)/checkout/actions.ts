@@ -89,6 +89,9 @@ export async function placeOrder(input: CheckoutInput): Promise<CheckoutResult> 
   for (const item of data.items) {
     const product = products.find((p) => p.id === item.productId);
     if (!product || !product.active) return { ok: false, error: "Um dos produtos não está mais disponível." };
+    if (product.price_cents <= 0) {
+      return { ok: false, error: `${product.name} é feito sob encomenda. Fale com a Isa pelo WhatsApp para combinar o valor.` };
+    }
 
     if (!product.flower_count) {
       productUse.set(product.id, (productUse.get(product.id) ?? 0) + item.quantity);

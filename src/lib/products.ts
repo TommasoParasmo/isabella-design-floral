@@ -15,3 +15,9 @@ export function photosOf(item: { image_url: string | null; images?: string[] | n
   if (item.images?.length) return item.images;
   return item.image_url ? [item.image_url] : [];
 }
+
+// Produto sob encomenda/sob consulta: cadastrado sem preço (R$ 0,00). Aparece
+// na loja com "Sob consulta" e o cliente encomenda pelo WhatsApp.
+export function isOnRequest(product: Pick<Product, "price_cents">) {
+  return product.price_cents <= 0;
+}

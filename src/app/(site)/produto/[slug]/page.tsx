@@ -8,7 +8,7 @@ import { PhotoGallery } from "@/components/photo-gallery";
 import { storeConfig } from "@/lib/config";
 import { getFlowers, getProduct } from "@/lib/catalog";
 import { formatPrice, installmentText } from "@/lib/format";
-import { photosOf } from "@/lib/products";
+import { isOnRequest, photosOf } from "@/lib/products";
 import { whatsappLink } from "@/lib/site";
 
 export const revalidate = 60;
@@ -25,7 +25,8 @@ export default async function ProductPage({ params }: Props) {
   if (!product) notFound();
   const flowers = product.flower_count ? await getFlowers() : [];
   const photos = photosOf(product);
-  const installments = installmentText(product.price_cents, storeConfig.maxInstallments);
+  const onRequest = isOnRequest(product);
+  const installments = onRequest ? null : installmentText(product.price_cents, storeConfig.maxInstallments);
 
   return (
     <section className="mx-auto grid max-w-6xl gap-10 px-4 py-14 sm:px-6 md:grid-cols-2 md:gap-16">
@@ -41,10 +42,14 @@ export default async function ProductPage({ params }: Props) {
           ← Voltar para a loja
         </Link>
         <h1 className="mt-4 font-serif text-5xl text-ink">{product.name}</h1>
+        {onRequest ? (
+          <p className="mt-3 font-serif text-3xl text-wine">Sob consulta</p>
+        ) : (
         <p className="mt-3 font-serif text-3xl text-wine">
           {product.flower_count && flowers.some((f) => f.extra_price_cents > 0) && <span className="mr-2 font-sans text-sm text-muted">a partir de</span>}
           {formatPrice(product.price_cents)}
         </p>
+        )}
         {installments && <p className="text-sm text-muted">{installments} no cartão</p>}
         <p className="mt-6 leading-relaxed whitespace-pre-line text-muted">{product.description}</p>
         <ul className="mt-6 space-y-2 text-sm text-ink/80">
@@ -58,9 +63,21 @@ export default async function ProductPage({ params }: Props) {
           <li>• Cartão com mensagem personalizada</li>
         </ul>
         <div className="mt-8">
-          {product.flower_count ? <BuildBouquet product={product} flowers={flowers} /> : <AddToCart product={product} />}
+          {onRequest ? (
+            <div>
+              <p className="mb-4 text-sm text-muted">Feito sob encomenda: o valor depende do tamanho e das flores. Fale com a Isa para combinar.</p>
+              <a
+                href={whatsappLink(`Olá, Isa! Gostaria de encomendar: ${product.name}.`)}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-block rounded-full bg-wine px-8 py-3 text-sm text-cream hover:bg-wine-deep"
+              >
+                Encomendar pelo WhatsApp
+              </a>
+            </div>
+          ) : product.flower_count ? <BuildBouquet product={product} flowers={flowers} /> : <AddToCart product={product} />}
         </div>
-        {product.made_to_order && (
+        {product.made_to_order && !onRequest && (
           <p className="mt-6 rounded-2xl bg-blush px-5 py-4 text-sm leading-relaxed text-ink/80">
             As flores e as cores dependem da disponibilidade da semana, então podem ocorrer variações sutis em relação à foto.
             Quer flores ou cores específicas?{" "}
