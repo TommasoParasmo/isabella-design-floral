@@ -45,12 +45,12 @@ export default async function AssinaturasPage() {
 
         {clubeFrom != null && (
           <Link
-            href="/clube-dos-desatentos"
+            href="/clube-nao-me-esquecas"
             className="mx-auto mt-12 flex max-w-3xl flex-col items-center gap-2 rounded-3xl border border-wine bg-blush px-6 py-6 text-center hover:bg-rose-soft/40 sm:flex-row sm:justify-between sm:text-left"
           >
             <span>
               <span className="block font-script text-2xl text-wine/80">novidade</span>
-              <span className="block font-serif text-3xl">Clube dos Desatentos</span>
+              <span className="block font-serif text-3xl">Clube Não-Me-Esqueças</span>
               <span className="block text-sm text-muted">Plano anual para quem esquece as datas: você escolhe as datas do ano e nós entregamos as flores.</span>
             </span>
             <span className="shrink-0 text-sm text-wine">a partir de {formatPrice(clubeFrom)} por ano →</span>

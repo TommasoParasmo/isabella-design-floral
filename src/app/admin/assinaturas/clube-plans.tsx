@@ -68,8 +68,8 @@ export function ClubePlans({ plans }: { plans: Row[] }) {
   return (
     <section className="mt-8 rounded-2xl border border-rose-soft bg-blush/50 p-5">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <h2 className="font-serif text-2xl">Clube dos Desatentos</h2>
-        <Link href="/clube-dos-desatentos" target="_blank" className="text-xs text-wine underline">Ver página</Link>
+        <h2 className="font-serif text-2xl">Clube Não-Me-Esqueças</h2>
+        <Link href="/clube-nao-me-esquecas" target="_blank" className="text-xs text-wine underline">Ver página</Link>
       </div>
       <p className="mt-1 text-xs text-muted">
         Planos anuais vendidos pelo WhatsApp. Mude preços e entregas aqui; o site atualiza em até 1 minuto.

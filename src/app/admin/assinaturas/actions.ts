@@ -25,7 +25,7 @@ const clubePlanSchema = z.object({
 
 function revalidateClube() {
   revalidatePath("/admin/assinaturas");
-  revalidatePath("/clube-dos-desatentos");
+  revalidatePath("/clube-nao-me-esquecas");
   revalidatePath("/assinaturas");
 }
 

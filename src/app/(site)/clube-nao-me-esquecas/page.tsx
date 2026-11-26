@@ -7,7 +7,7 @@ import { site, whatsappLink } from "@/lib/site";
 import type { ClubePlan } from "@/lib/types";
 
 export const metadata: Metadata = {
-  title: "Clube dos Desatentos",
+  title: "Clube Não-Me-Esqueças",
   description: "Assinatura floral anual para quem esquece as datas importantes: você escolhe o plano, combina as datas do ano com a Isa e nós entregamos flores em cada uma.",
 };
 export const revalidate = 60;
@@ -22,7 +22,7 @@ const steps = [
 const occasions = ["Aniversários", "Dia das Mães", "Dia dos Namorados", "Aniversário de casamento", "Ou só porque sim"];
 
 function planMessage(plan: ClubePlan) {
-  return `Olá, Isa! Quero assinar o Clube dos Desatentos, ${plan.name} (${plan.deliveries} entregas no ano, ${formatPrice(plan.price_cents)}).`;
+  return `Olá, Isa! Quero assinar o Clube Não-Me-Esqueças, ${plan.name} (${plan.deliveries} entregas no ano, ${formatPrice(plan.price_cents)}).`;
 }
 
 export default async function ClubePage() {
@@ -34,8 +34,8 @@ export default async function ClubePage() {
       <section className="mx-auto max-w-6xl px-4 pt-16 pb-16 sm:px-6">
         <SectionTitle
           eyebrow="assinatura anual"
-          title="Clube dos Desatentos"
-          intro="Para quem vive esquecendo as datas importantes. Você paga uma vez, combina com a Isa as datas do ano e a gente cuida das flores, sem você precisar lembrar de nada."
+          title="Clube Não-Me-Esqueças"
+          intro="Não-me-esqueças é o nome popular do miosótis, a florzinha azul da lembrança. O clube é para quem vive esquecendo as datas importantes: você paga uma vez, combina com a Isa as datas do ano e a gente cuida das flores, sem você precisar lembrar de nada."
         />
         <ul className="mx-auto mt-8 flex max-w-3xl flex-wrap justify-center gap-2">
           {occasions.map((o) => (
@@ -98,7 +98,7 @@ export default async function ClubePage() {
           Se alguma data mudar no meio do caminho, é só avisar pelo WhatsApp.
         </p>
         <a
-          href={whatsappLink("Olá, Isa! Tenho uma dúvida sobre o Clube dos Desatentos.")}
+          href={whatsappLink("Olá, Isa! Tenho uma dúvida sobre o Clube Não-Me-Esqueças.")}
           target="_blank"
           rel="noreferrer"
           className="mt-6 inline-block rounded-full border border-wine px-7 py-3 text-sm text-wine hover:bg-wine hover:text-cream"

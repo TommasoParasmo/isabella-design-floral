@@ -57,7 +57,7 @@ export type SubscriptionPlan = {
   size: "pequeno" | "medio" | "grande" | null;
 };
 
-// Clube dos Desatentos: plano anual com N entregas no ano.
+// Clube Não-Me-Esqueças: plano anual com N entregas no ano.
 export type ClubePlan = {
   id: string;
   name: string;
