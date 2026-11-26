@@ -130,7 +130,7 @@ export async function getPlans(): Promise<SubscriptionPlan[]> {
   return data;
 }
 
-// Planos ativos do Clube dos Desatentos, na ordem da Isa.
+// Planos ativos do Clube Não-Me-Esqueças, na ordem da Isa.
 export async function getClubePlans(): Promise<ClubePlan[]> {
   if (!isSupabaseConfigured()) return seedClubePlans;
   const { data, error } = await createPublicClient()
