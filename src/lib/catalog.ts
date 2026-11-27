@@ -191,3 +191,10 @@ export async function getDeliverySlots(): Promise<DeliverySlot[]> {
   if (error) throw error;
   return data;
 }
+
+// Vasos são vendidos sozinhos: a página do produto não fala de flores nem de montagem.
+export async function isVase(product: Pick<Product, "category_id">): Promise<boolean> {
+  if (!product.category_id) return false;
+  const category = (await getAllCategories()).find((c) => c.id === product.category_id);
+  return category?.slug === "vasos";
+}

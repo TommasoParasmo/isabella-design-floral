@@ -9,6 +9,7 @@ export type ProductFormValues = {
   description?: string | null;
   category_id?: string | null;
   price_cents?: number;
+  stock?: number;
   low_stock_threshold?: number;
   flower_count?: number | null;
   made_to_order?: boolean;
@@ -69,6 +70,36 @@ export function ProductForm({ product = {}, categories }: { product?: ProductFor
           Com um número aqui, o produto vira buquê montável: o cliente escolhe essa quantidade de flores e o estoque baixado é o das flores.
         </span>
       </label>
+      <fieldset className="group rounded-2xl border border-rose-soft p-4 text-sm">
+        <legend className="px-1">Estoque</legend>
+        <div className="flex flex-wrap gap-6">
+          <label className="flex items-center gap-2">
+            <input type="radio" name="stock_mode" value="controlado" defaultChecked={!product.made_to_order} /> Controlar estoque
+          </label>
+          <label className="flex items-center gap-2">
+            <input id="stock-mode-livre" type="radio" name="stock_mode" value="livre" defaultChecked={product.made_to_order ?? false} /> Sem controle de estoque
+          </label>
+        </div>
+        <input type="hidden" name="stock_loaded" value={product.stock ?? 0} />
+        <label className="mt-3 block group-has-[#stock-mode-livre:checked]:hidden">
+          Quantidade em estoque
+          <input
+            name="stock"
+            type="number"
+            min={0}
+            max={9999}
+            defaultValue={product.stock ?? 0}
+            className={`${field} mt-1 sm:max-w-40`}
+          />
+          <span className="mt-1 block text-xs text-muted">
+            Quantas unidades você tem agora (ex.: 1 vaso). As vendas do site e do balcão baixam sozinhas; quando zerar, aparece como esgotado.
+            No buquê montável o estoque é o das flores e este número não é usado.
+          </span>
+        </label>
+        <p className="mt-3 hidden text-xs text-muted group-has-[#stock-mode-livre:checked]:block">
+          Sem controle o produto nunca esgota. Use para a criação livre (a Isa escolhe as flores) ou para vasos que você sempre consegue repor.
+        </p>
+      </fieldset>
       <fieldset className="text-sm">
         <legend>Fotos</legend>
         <div className="mt-1">
@@ -82,7 +113,6 @@ export function ProductForm({ product = {}, categories }: { product?: ProductFor
         <label className="flex items-center gap-2"><input type="checkbox" name="active" defaultChecked={product.active ?? true} /> Visível na loja</label>
         <label className="flex items-center gap-2"><input type="checkbox" name="featured" defaultChecked={product.featured} /> Destaque na home</label>
         <label className="flex items-center gap-2"><input type="checkbox" name="same_day" defaultChecked={product.same_day ?? true} /> Entrega no mesmo dia</label>
-        <label className="flex items-center gap-2"><input type="checkbox" name="made_to_order" defaultChecked={product.made_to_order ?? false} /> Criação livre (sem controle de estoque)</label>
         <label className="flex items-center gap-2"><input type="checkbox" name="on_request" defaultChecked={product.id != null && !product.price_cents} /> Sob encomenda (sem preço no site)</label>
       </div>
       <p className="-mt-2 text-xs text-muted">
@@ -90,7 +120,6 @@ export function ProductForm({ product = {}, categories }: { product?: ProductFor
       </p>
       <button className="rounded-full bg-wine px-8 py-3 text-sm text-cream hover:bg-wine-deep">Salvar produto</button>
       <p className="text-xs text-muted">Vasos: escolha a categoria Vasos para o produto aparecer só na aba Vasos da loja, separado dos arranjos.</p>
-      {!product.id && <p className="text-xs text-muted">O estoque inicial é lançado em Estoque → Entrada (no buquê montável, é o estoque das flores).</p>}
     </form>
   );
 }

@@ -6,7 +6,7 @@ import { BuildBouquet } from "@/components/build-bouquet";
 import { FlowerArt } from "@/components/flower-art";
 import { PhotoGallery } from "@/components/photo-gallery";
 import { storeConfig } from "@/lib/config";
-import { getFlowers, getProduct } from "@/lib/catalog";
+import { getFlowers, getProduct, isVase } from "@/lib/catalog";
 import { formatPrice, installmentText } from "@/lib/format";
 import { OldPrice, PromoBadge } from "@/components/promo-price";
 import { isOnRequest, photosOf } from "@/lib/products";
@@ -25,6 +25,7 @@ export default async function ProductPage({ params }: Props) {
   const product = await getProduct((await params).slug);
   if (!product) notFound();
   const flowers = product.flower_count ? await getFlowers() : [];
+  const vase = await isVase(product);
   const photos = photosOf(product);
   const onRequest = isOnRequest(product);
   const installments = onRequest ? null : installmentText(product.price_cents, storeConfig.maxInstallments);
@@ -55,6 +56,15 @@ export default async function ProductPage({ params }: Props) {
         )}
         {installments && <p className="text-sm text-muted">{installments} no cartão</p>}
         <p className="mt-6 leading-relaxed whitespace-pre-line text-muted">{product.description}</p>
+        {vase ? (
+          <ul className="mt-6 space-y-2 text-sm text-ink/80">
+            <li>• Somente o vaso, sem flores</li>
+            <li>• Entrega agendada em São Paulo (manhã, tarde ou noite)</li>
+            {product.same_day && (
+              <li>• Entrega no mesmo dia para pedidos até {storeConfig.sameDayCutoffHour}h</li>
+            )}
+          </ul>
+        ) : (
         <ul className="mt-6 space-y-2 text-sm text-ink/80">
           {product.flower_count && <li>• {product.flower_count} flores escolhidas por você</li>}
           {product.made_to_order && <li>• Você escolhe o tamanho, a Isa escolhe as flores frescas da semana</li>}
@@ -65,6 +75,7 @@ export default async function ProductPage({ params }: Props) {
           )}
           <li>• Cartão com mensagem personalizada</li>
         </ul>
+        )}
         <div className="mt-8">
           {onRequest ? (
             <div>
@@ -80,7 +91,21 @@ export default async function ProductPage({ params }: Props) {
             </div>
           ) : product.flower_count ? <BuildBouquet product={product} flowers={flowers} /> : <AddToCart product={product} />}
         </div>
-        {product.made_to_order && !onRequest && (
+        {vase && (
+          <p className="mt-6 rounded-2xl bg-blush px-5 py-4 text-sm leading-relaxed text-ink/80">
+            A compra pelo site é só do vaso. Quer o vaso já com flores? A Isa monta uma composição especial para ele:{" "}
+            <a
+              href={whatsappLink(`Olá, Isa! Gostaria do ${product.name} com flores.`)}
+              target="_blank"
+              rel="noreferrer"
+              className="text-wine underline underline-offset-4"
+            >
+              peça vaso + flores pelo WhatsApp
+            </a>
+            .
+          </p>
+        )}
+        {product.made_to_order && !onRequest && !vase && (
           <p className="mt-6 rounded-2xl bg-blush px-5 py-4 text-sm leading-relaxed text-ink/80">
             As flores e as cores dependem da disponibilidade da semana, então podem ocorrer variações sutis em relação à foto.
             Quer flores ou cores específicas?{" "}

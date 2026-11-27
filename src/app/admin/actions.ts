@@ -126,12 +126,18 @@ const productSchema = z.object({
     .pipe(z.number().int().min(1).max(200).nullable()),
   featured: z.literal("on").optional(),
   same_day: z.literal("on").optional(),
-  made_to_order: z.literal("on").optional(),
+  stock_mode: z.enum(["controlado", "livre"]).default("controlado"),
+  stock: z
+    .string()
+    .optional()
+    .transform((v) => (v && v.trim() ? Number(v) : null))
+    .pipe(z.number().int().min(0).max(9999).nullable()),
+  stock_loaded: z.coerce.number().int().default(0),
   active: z.literal("on").optional(),
 });
 
 export async function saveProduct(formData: FormData) {
-  const { supabase } = await requireAdmin();
+  const { supabase, user } = await requireAdmin();
   const data = productSchema.parse(Object.fromEntries([...formData.entries()].filter(([, v]) => typeof v === "string")));
   // Sob encomenda = sem preço (R$ 0,00): a loja mostra "Sob consulta".
   const price = data.on_request === "on" ? 0 : data.price;
@@ -139,6 +145,7 @@ export async function saveProduct(formData: FormData) {
   if (!Number.isFinite(price) || price < 0) throw new Error("Preço inválido");
 
   const images = photoList(formData);
+  const madeToOrder = data.stock_mode === "livre";
 
   // Nota fiscal: produto de categoria com NCM próprio (ex.: Vasos) usa o dela; o resto é flor.
   let category: { ncm: string | null } | null = null;
@@ -156,10 +163,10 @@ export async function saveProduct(formData: FormData) {
     price_cents: price,
     low_stock_threshold: data.low_stock_threshold,
     // Criação livre não é buquê montável: quem escolhe as flores é a Isa.
-    flower_count: data.made_to_order === "on" ? null : data.flower_count,
+    flower_count: madeToOrder ? null : data.flower_count,
     featured: data.featured === "on",
     same_day: data.same_day === "on",
-    made_to_order: data.made_to_order === "on",
+    made_to_order: madeToOrder,
     active: data.active === "on",
     updated_at: new Date().toISOString(),
     images,
@@ -167,10 +174,34 @@ export async function saveProduct(formData: FormData) {
     ncm: category?.ncm ?? "06031900",
   };
 
-  const { error } = data.id
-    ? await supabase.from("products").update(row).eq("id", data.id)
-    : await supabase.from("products").insert(row);
+  // O saldo só muda por movimentação: guarda o saldo de antes para lançar a diferença.
+  let previousStock = 0;
+  if (data.id) {
+    const { data: current, error: currentError } = await supabase.from("products").select("stock").eq("id", data.id).maybeSingle();
+    if (currentError) throw currentError;
+    previousStock = current?.stock ?? 0;
+  }
+
+  const { data: saved, error } = data.id
+    ? await supabase.from("products").update(row).eq("id", data.id).select("id").single()
+    : await supabase.from("products").insert(row).select("id").single();
   if (error) throw error;
+
+  // Quantidade digitada no cadastro (ex.: vaso com 1 unidade) vira entrada ou ajuste no estoque.
+  // Só quando a quantidade foi mudada no formulário: salvar outra coisa não desfaz uma venda feita enquanto ele estava aberto.
+  // Buquê montável e produto sem controle não têm estoque próprio.
+  if (!madeToOrder && !row.flower_count && data.stock != null && data.stock !== previousStock && (!data.id || data.stock !== data.stock_loaded)) {
+    const delta = data.stock - previousStock;
+    const { error: movementError } = await supabase.from("stock_movements").insert({
+      product_id: saved.id,
+      quantity: delta,
+      reason: data.id ? "ajuste" : "compra",
+      note: data.id ? "Quantidade alterada no cadastro do produto" : "Estoque inicial no cadastro do produto",
+      created_by: user.id,
+    });
+    if (movementError) throw movementError;
+    revalidatePath("/admin/estoque");
+  }
 
   revalidatePath("/", "layout");
   redirect("/admin/produtos");
