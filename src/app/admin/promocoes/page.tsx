@@ -22,16 +22,21 @@ export default async function PromocoesPage() {
   const [{ data: promos, error }, { data: categories }, { data: products }, { data: workshops }] = await Promise.all([
     supabase.from("promotions").select(PROMOTION_FIELDS).order("starts_on", { ascending: false }).order("created_at"),
     supabase.from("categories").select("id, name").order("position"),
-    supabase.from("products").select("id, name, price_cents").eq("active", true).gt("price_cents", 0).order("name"),
+    supabase.from("products").select("id, name, price_cents, active").order("name"),
     supabase.from("workshops").select("id, title, starts_at, price_cents").eq("active", true).gte("starts_at", new Date().toISOString()).order("starts_at"),
   ]);
   const list = (promos ?? []) as Promotion[];
+  // Só dá para criar desconto em produto à venda e com preço.
+  const pricedProducts = products?.filter((p) => p.active && p.price_cents > 0);
   const name = (rows: Named[] | null, id: string | null) => rows?.find((r) => r.id === id)?.name ?? "—";
   const workshopName = (id: string | null) => workshops?.find((w) => w.id === id)?.title ?? "Workshop";
 
   function appliesTo(p: Promotion) {
     if (p.target === "categoria") return `Categoria ${name(categories, p.category_id)}`;
-    if (p.target === "produto") return name(products, p.product_id);
+    if (p.target === "produto") {
+      const product = products?.find((x) => x.id === p.product_id);
+      return product && product.price_cents <= 0 ? `${product.name} (sob consulta, o desconto não muda o preço)` : name(products, p.product_id);
+    }
     if (p.target === "workshops") return "Todos os workshops";
     return workshopName(p.workshop_id);
   }
@@ -123,7 +128,7 @@ export default async function PromocoesPage() {
               ))}
             </optgroup>
             <optgroup label="Um produto">
-              {products?.map((p) => <option key={p.id} value={`produto:${p.id}`}>{p.name}</option>)}
+              {pricedProducts?.map((p) => <option key={p.id} value={`produto:${p.id}`}>{p.name}</option>)}
             </optgroup>
           </select>
         </label>
