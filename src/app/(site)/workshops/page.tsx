@@ -4,6 +4,7 @@ import { FlowerArt } from "@/components/flower-art";
 import { SectionTitle } from "@/components/section-title";
 import { getUpcomingWorkshops } from "@/lib/catalog";
 import { formatDateTime, formatPrice } from "@/lib/format";
+import { OldPrice, PromoBadge } from "@/components/promo-price";
 import { site } from "@/lib/site";
 
 export const metadata: Metadata = { title: "Workshops" };
@@ -69,7 +70,8 @@ export default async function WorkshopsPage() {
                 ))}
               </ul>
               <div className="mt-6 flex flex-wrap items-center gap-4 md:mt-auto md:pt-6">
-                <p className="font-serif text-3xl text-wine">{formatPrice(w.price_cents)}</p>
+                <p className="font-serif text-3xl text-wine"><OldPrice item={w} />{formatPrice(w.price_cents)}</p>
+                <PromoBadge item={w} />
                 <p className="text-sm text-muted">{w.seats_left > 0 ? `${w.seats_left} de ${w.capacity} vagas` : "Turma esgotada"}</p>
                 {w.seats_left > 0 && (
                   <Link

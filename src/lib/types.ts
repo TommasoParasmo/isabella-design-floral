@@ -30,6 +30,10 @@ export type Product = {
   flower_count: number | null;
   // Criação livre: a Isa monta com as flores da semana. Sem controle de estoque.
   made_to_order: boolean;
+  // Preenchidos quando há promoção valendo: price_cents já vem com desconto
+  // e list_price_cents é o preço original (mostrado riscado).
+  list_price_cents?: number | null;
+  percent_off?: number;
 };
 
 export type Flower = {
@@ -82,4 +86,6 @@ export type Workshop = {
   images?: string[];
   includes: string[];
   seats_left: number;
+  list_price_cents?: number | null;
+  percent_off?: number;
 };

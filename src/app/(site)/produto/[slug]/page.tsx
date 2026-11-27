@@ -8,6 +8,7 @@ import { PhotoGallery } from "@/components/photo-gallery";
 import { storeConfig } from "@/lib/config";
 import { getFlowers, getProduct } from "@/lib/catalog";
 import { formatPrice, installmentText } from "@/lib/format";
+import { OldPrice, PromoBadge } from "@/components/promo-price";
 import { isOnRequest, photosOf } from "@/lib/products";
 import { whatsappLink } from "@/lib/site";
 
@@ -47,7 +48,9 @@ export default async function ProductPage({ params }: Props) {
         ) : (
         <p className="mt-3 font-serif text-3xl text-wine">
           {product.flower_count && flowers.some((f) => f.extra_price_cents > 0) && <span className="mr-2 font-sans text-sm text-muted">a partir de</span>}
+          <OldPrice item={product} />
           {formatPrice(product.price_cents)}
+          <PromoBadge item={product} className="ml-3 align-middle font-sans" />
         </p>
         )}
         {installments && <p className="text-sm text-muted">{installments} no cartão</p>}

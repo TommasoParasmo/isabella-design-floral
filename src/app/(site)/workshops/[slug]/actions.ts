@@ -2,6 +2,7 @@
 
 import { z } from "zod";
 import { createPreference } from "@/lib/mercadopago";
+import { discounted, getRunningPromotions, workshopPercent } from "@/lib/promotions";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isSupabaseConfigured } from "@/lib/supabase/server";
 import { customerSchema } from "@/lib/validation";
@@ -43,13 +44,15 @@ export async function registerForWorkshop(
     return { ok: false, error: error.message.includes("vagas") ? "Não há mais vagas suficientes nesta turma." : "Este workshop não está mais disponível." };
   }
 
-  const total = workshop.price_cents * data.seats;
+  // Preço com a promoção valendo agora.
+  const unitPrice = discounted(workshop.price_cents, workshopPercent(await getRunningPromotions(supabase), workshop.id));
+  const total = unitPrice * data.seats;
   await supabase.from("workshop_registrations").update({ total_cents: total }).eq("id", registrationId);
 
   const preference = await createPreference({
     externalReference: `ws:${registrationId}`,
     returnPath: "/workshops/obrigado",
-    items: [{ id: workshop.id, title: `Workshop ${workshop.title}`, quantity: data.seats, unit_price_cents: workshop.price_cents }],
+    items: [{ id: workshop.id, title: `Workshop ${workshop.title}`, quantity: data.seats, unit_price_cents: unitPrice }],
     payer: { name: data.customer.name, email: data.customer.email },
     // Mesmo prazo da reserva da vaga.
     expiresInMinutes: 30,

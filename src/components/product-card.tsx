@@ -5,6 +5,7 @@ import { formatPrice, installmentText } from "@/lib/format";
 import { isAvailable, isOnRequest } from "@/lib/products";
 import type { Product } from "@/lib/types";
 import { FlowerArt } from "./flower-art";
+import { OldPrice, PromoBadge } from "./promo-price";
 
 export function ProductCard({ product }: { product: Product }) {
   const soldOut = !isAvailable(product);
@@ -26,6 +27,7 @@ export function ProductCard({ product }: { product: Product }) {
             Entrega hoje
           </span>
         )}
+        {!soldOut && <PromoBadge item={product} className="absolute bottom-3 left-1/2 -translate-x-1/2" />}
         {soldOut && (
           <span className="absolute top-1/2 left-1/2 -translate-x-1/2 rounded-full bg-cream/90 px-3 py-1 text-xs tracking-wider text-wine uppercase">
             Esgotado
@@ -35,7 +37,9 @@ export function ProductCard({ product }: { product: Product }) {
       <div className="mt-4 text-center">
         <h3 className="font-serif text-xl text-ink group-hover:text-wine">{product.name}</h3>
         {product.flower_count && <p className="text-xs text-muted">{product.flower_count} flores · você escolhe</p>}
-        <p className="mt-1 text-sm text-ink/80">{isOnRequest(product) ? "Sob consulta" : formatPrice(product.price_cents)}</p>
+        <p className="mt-1 text-sm text-ink/80">
+          {isOnRequest(product) ? "Sob consulta" : <><OldPrice item={product} className="text-xs" />{formatPrice(product.price_cents)}</>}
+        </p>
         {!isOnRequest(product) && installmentText(product.price_cents, storeConfig.maxInstallments) && (
           <p className="text-xs text-muted">{installmentText(product.price_cents, storeConfig.maxInstallments)}</p>
         )}

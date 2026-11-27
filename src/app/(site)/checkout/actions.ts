@@ -4,6 +4,7 @@ import { z } from "zod";
 import { getDeliverySlots } from "@/lib/catalog";
 import { nowInSaoPaulo, slotsForDate } from "@/lib/delivery";
 import { createPreference } from "@/lib/mercadopago";
+import { discounted, getRunningPromotions, productPercent } from "@/lib/promotions";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isSupabaseConfigured } from "@/lib/supabase/server";
 
@@ -68,11 +69,12 @@ export async function placeOrder(input: CheckoutInput): Promise<CheckoutResult> 
   // Preços e estoque sempre vêm do banco, nunca do navegador.
   const ids = data.items.map((i) => i.productId);
   const flowerIds = data.items.flatMap((i) => i.flowers?.map((f) => f.flowerId) ?? []);
-  const [{ data: products, error: productsError }, { data: flowers, error: flowersError }] = await Promise.all([
-    supabase.from("products").select("id, name, price_cents, stock, same_day, active, flower_count, made_to_order").in("id", ids),
+  const [{ data: products, error: productsError }, { data: flowers, error: flowersError }, promos] = await Promise.all([
+    supabase.from("products").select("id, name, category_id, price_cents, stock, same_day, active, flower_count, made_to_order").in("id", ids),
     flowerIds.length
       ? supabase.from("flowers").select("id, name, stock, active, extra_price_cents, position").in("id", flowerIds)
       : Promise.resolve({ data: [], error: null }),
+    getRunningPromotions(supabase),
   ]);
   if (productsError) throw productsError;
   if (flowersError) throw flowersError;
@@ -93,12 +95,15 @@ export async function placeOrder(input: CheckoutInput): Promise<CheckoutResult> 
       return { ok: false, error: `${product.name} é feito sob encomenda. Fale com a Isa pelo WhatsApp para combinar o valor.` };
     }
 
+    // Preço com a promoção valendo agora (no buquê montável, o desconto é no preço base).
+    const basePrice = discounted(product.price_cents, productPercent(promos, product));
+
     if (!product.flower_count) {
       productUse.set(product.id, (productUse.get(product.id) ?? 0) + item.quantity);
       if (!product.made_to_order && product.stock < productUse.get(product.id)!) {
         return { ok: false, error: `Temos só ${product.stock} unidade(s) de ${product.name} no momento.` };
       }
-      lines.push({ product, quantity: item.quantity, unitPrice: product.price_cents, flowers: null });
+      lines.push({ product, quantity: item.quantity, unitPrice: basePrice, flowers: null });
       continue;
     }
 
@@ -120,7 +125,7 @@ export async function placeOrder(input: CheckoutInput): Promise<CheckoutResult> 
     lines.push({
       product,
       quantity: item.quantity,
-      unitPrice: product.price_cents + extra,
+      unitPrice: basePrice + extra,
       flowers: chosen.map((c) => ({ flower_id: c.flower.id, name: c.flower.name, quantity: c.quantity })),
     });
   }
