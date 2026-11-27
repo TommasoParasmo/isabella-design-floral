@@ -132,6 +132,7 @@ const productSchema = z.object({
     .optional()
     .transform((v) => (v && v.trim() ? Number(v) : null))
     .pipe(z.number().int().min(0).max(9999).nullable()),
+  stock_loaded: z.coerce.number().int().default(0),
   active: z.literal("on").optional(),
 });
 
@@ -187,8 +188,9 @@ export async function saveProduct(formData: FormData) {
   if (error) throw error;
 
   // Quantidade digitada no cadastro (ex.: vaso com 1 unidade) vira entrada ou ajuste no estoque.
+  // Só quando a quantidade foi mudada no formulário: salvar outra coisa não desfaz uma venda feita enquanto ele estava aberto.
   // Buquê montável e produto sem controle não têm estoque próprio.
-  if (!madeToOrder && !row.flower_count && data.stock != null && data.stock !== previousStock) {
+  if (!madeToOrder && !row.flower_count && data.stock != null && data.stock !== previousStock && (!data.id || data.stock !== data.stock_loaded)) {
     const delta = data.stock - previousStock;
     const { error: movementError } = await supabase.from("stock_movements").insert({
       product_id: saved.id,

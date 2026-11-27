@@ -80,6 +80,7 @@ export function ProductForm({ product = {}, categories }: { product?: ProductFor
             <input id="stock-mode-livre" type="radio" name="stock_mode" value="livre" defaultChecked={product.made_to_order ?? false} /> Sem controle de estoque
           </label>
         </div>
+        <input type="hidden" name="stock_loaded" value={product.stock ?? 0} />
         <label className="mt-3 block group-has-[#stock-mode-livre:checked]:hidden">
           Quantidade em estoque
           <input
