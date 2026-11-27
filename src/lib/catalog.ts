@@ -1,7 +1,9 @@
 import { createPublicClient } from "./supabase/public";
 import { isSupabaseConfigured } from "./supabase/server";
 import { nowInSaoPaulo, type DeliverySlot } from "./delivery";
+import { cache } from "react";
 import { isAvailable } from "./products";
+import { getRunningPromotions, withProductPromos, withWorkshopPromos } from "./promotions";
 import { seedCategories, seedDeliverySlots, seedFlowers, seedClubePlans, seedPlans, seedProducts, seedWorkshops } from "./seed-data";
 import type { Category, ClubePlan, Flower, Product, SubscriptionPlan, Workshop } from "./types";
 
@@ -25,6 +27,14 @@ async function withFlowerStock(products: Product[]): Promise<Product[]> {
   if (!products.some((p) => p.flower_count)) return products;
   const stems = (await getFlowers()).reduce((n, f) => n + Math.max(f.stock, 0), 0);
   return products.map((p) => (p.flower_count ? { ...p, stock: Math.floor(stems / p.flower_count) } : p));
+}
+
+// Promoções valendo agora, buscadas uma vez por requisição.
+const runningPromotions = cache(async () => (isSupabaseConfigured() ? getRunningPromotions(createPublicClient()) : []));
+
+// Preço da vitrine já com o desconto da promoção (o original vai em list_price_cents).
+async function priced(products: Product[]): Promise<Product[]> {
+  return withProductPromos(await withFlowerStock(products), await runningPromotions());
 }
 
 // Coleções sazonais só aparecem dentro da janela de datas.
@@ -85,13 +95,13 @@ export async function getProducts(categorySlug?: string, onlySameDay = false): P
     products = data;
   }
 
-  return (await withFlowerStock(products))
+  return (await priced(products))
     .filter((p) => (category ? p.category_id === category.id : !p.category_id || !hidden.has(p.category_id)))
     .filter((p) => !onlySameDay || (p.same_day && isAvailable(p)));
 }
 
 export async function getFeaturedProducts(): Promise<Product[]> {
-  if (!isSupabaseConfigured()) return withFlowerStock(seedProducts.filter((p) => p.featured));
+  if (!isSupabaseConfigured()) return priced(seedProducts.filter((p) => p.featured));
   const { data, error } = await createPublicClient()
     .from("products")
     .select(PRODUCT_FIELDS)
@@ -100,7 +110,7 @@ export async function getFeaturedProducts(): Promise<Product[]> {
     .order("price_cents")
     .limit(4);
   if (error) throw error;
-  return withFlowerStock(data);
+  return priced(data);
 }
 
 export async function getProduct(slug: string): Promise<Product | null> {
@@ -116,7 +126,7 @@ export async function getProduct(slug: string): Promise<Product | null> {
           if (error) throw error;
           return data;
         });
-  return product ? (await withFlowerStock([product]))[0] : null;
+  return product ? (await priced([product]))[0] : null;
 }
 
 export async function getPlans(): Promise<SubscriptionPlan[]> {
@@ -165,7 +175,10 @@ export async function getUpcomingWorkshops(): Promise<Workshop[]> {
   if (error) throw error;
   if (availabilityError) throw availabilityError;
   const seats = new Map((availability ?? []).map((a) => [a.workshop_id, a.seats_left]));
-  return workshops.map((w) => ({ ...w, seats_left: seats.get(w.id) ?? w.capacity }));
+  return withWorkshopPromos(
+    workshops.map((w) => ({ ...w, seats_left: seats.get(w.id) ?? w.capacity })),
+    await runningPromotions(),
+  );
 }
 
 export async function getDeliverySlots(): Promise<DeliverySlot[]> {

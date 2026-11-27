@@ -15,6 +15,7 @@ const nav = [
   { href: "/admin/produtos", label: "Produtos" },
   { href: "/admin/assinaturas", label: "Assinaturas" },
   { href: "/admin/workshops", label: "Workshops" },
+  { href: "/admin/promocoes", label: "Promoções" },
   { href: "/admin/notas", label: "Notas" },
 ];
 

@@ -4,6 +4,7 @@ import { ProductCard } from "@/components/product-card";
 import { SectionTitle } from "@/components/section-title";
 import { getActiveCollection, getCategories, getFeaturedProducts, getPlans, getUpcomingWorkshops } from "@/lib/catalog";
 import { formatDateTime, formatPrice } from "@/lib/format";
+import { OldPrice } from "@/components/promo-price";
 import { cheapestPlan, planKinds } from "@/lib/plans";
 import { site, whatsappLink } from "@/lib/site";
 
@@ -181,6 +182,7 @@ export default async function Home() {
                 <p className="text-xs tracking-wider text-muted uppercase">{formatDateTime(w.starts_at)}</p>
                 <h3 className="mt-1 font-serif text-2xl group-hover:text-wine">{w.title}</h3>
                 <p className="mt-1 text-sm text-muted">
+                  <OldPrice item={w} className="text-[0.9em]" />
                   {formatPrice(w.price_cents)} · {w.seats_left > 0 ? `${w.seats_left} vagas` : "Esgotado"}
                 </p>
               </div>

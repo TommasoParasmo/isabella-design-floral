@@ -5,6 +5,7 @@ import { FlowerArt } from "@/components/flower-art";
 import { PhotoGallery } from "@/components/photo-gallery";
 import { getUpcomingWorkshops } from "@/lib/catalog";
 import { formatDateTime, formatPrice } from "@/lib/format";
+import { OldPrice, PromoBadge } from "@/components/promo-price";
 import { photosOf } from "@/lib/products";
 import { RegisterForm } from "./register-form";
 
@@ -55,7 +56,8 @@ export default async function WorkshopPage({ params }: Props) {
         </p>
       </div>
       <div className="lg:pt-14">
-        <p className="mb-4 font-serif text-4xl text-wine">{formatPrice(w.price_cents)}<span className="ml-2 font-sans text-sm text-muted">por pessoa</span></p>
+        <PromoBadge item={w} className="mb-3 inline-block" />
+        <p className="mb-4 font-serif text-4xl text-wine"><OldPrice item={w} />{formatPrice(w.price_cents)}<span className="ml-2 font-sans text-sm text-muted">por pessoa</span></p>
         {w.seats_left > 0 ? (
           <RegisterForm slug={w.slug} priceCents={w.price_cents} seatsLeft={w.seats_left} />
         ) : (

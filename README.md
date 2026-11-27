@@ -36,6 +36,7 @@ O estoque é controlado pela tabela `stock_movements`: cada entrada ou saída (v
 - **Produtos**: cadastro com várias fotos (a primeira é a capa), preço, destaque e "entrega no mesmo dia"
 - **Assinaturas** e **Workshops**: assinantes, presentes, inscrições confirmadas e fotos de cada turma
 - **Notas**: todas as notas emitidas, com PDF, XML e cancelamento
+- **Promoções**: desconto em % por categoria, produto ou workshop, com data de início e fim e botão para ligar/desligar. O site mostra o preço antigo riscado e o checkout cobra com desconto
 
 Login em `/entrar`. Para criar a conta da Isa: Supabase → Authentication → Add user (e-mail e senha) e depois:
 
